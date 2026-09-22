@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-VehiculosApplication<vehiculos>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.loquendodev.vehiculos.VehiculosApplication",
+            "projectName": "vehiculos",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

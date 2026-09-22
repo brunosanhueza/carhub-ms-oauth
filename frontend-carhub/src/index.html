@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'Poppins', sans-serif !important;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+  </style>
+  <meta charset="utf-8">
+  <title>CARHUB | Tu proximo vehiculo te espera</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // Auto-cierre de la ventana emergente (Popup) y envío del token a la pestaña principal
+    (function() {
+      try {
+        var hash = window.location.hash || '';
+        var search = window.location.search || '';
+        var isAuthResponse = (hash.indexOf('code=') !== -1 || search.indexOf('code=') !== -1 ||
+                              hash.indexOf('error=') !== -1 || search.indexOf('error=') !== -1);
+
+        if (isAuthResponse) {
+          var payload = '';
+          if (hash.indexOf('code=') !== -1 || hash.indexOf('error=') !== -1) {
+            payload = hash.charAt(0) === '#' ? hash.substring(1) : hash;
+          } else {
+            payload = search.charAt(0) === '?' ? search.substring(1) : search;
+          }
+
+          if (payload) {
+            var params = new URLSearchParams(payload);
+            var state = params.get('state');
+            if (state) {
+              var parts = state.split('|');
+              var base64 = parts[0].replace(/-/g, '+').replace(/_/g, '/');
+              var padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+              var libraryState = JSON.parse(atob(padded));
+
+              if (libraryState && libraryState.id) {
+                // 1. Notificar a la pestaña principal vía BroadcastChannel (funciona entre pestañas/popups sin opener)
+                if (typeof BroadcastChannel !== 'undefined') {
+                  var channel = new BroadcastChannel(libraryState.id);
+                  channel.postMessage({ v: 1, payload: payload });
+                  channel.close();
+                }
+
+                // 2. Notificar por window.opener si estuviera disponible
+                try {
+                  if (window.opener && typeof window.opener.postMessage === 'function') {
+                    window.opener.postMessage({ type: 'msal:popup-response', payload: payload }, window.location.origin);
+                  }
+                } catch(e) {}
+
+                // 3. Cerrar el popup inmediatamente
+                try {
+                  window.close();
+                } catch(e) {}
+
+                // 4. Si el navegador retiene la ventana, mostrar cartel limpio y botón de cerrar
+                document.addEventListener('DOMContentLoaded', function() {
+                  document.body.innerHTML = '<div style="font-family:sans-serif;text-align:center;padding:50px;background:#0f172a;color:#fff;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;"><h2>Autenticaci\u00f3n exitosa</h2><p style="color:#94a3b8;margin-top:10px;">Iniciaste sesi\u00f3n correctamente. Ya puedes volver a la pesta\u00f1a de CarHub.</p><button onclick="window.close()" style="margin-top:24px;padding:12px 28px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:16px;cursor:pointer;font-weight:600;">Cerrar esta ventana</button></div>';
+                });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('MSAL popup relay error:', e);
+      }
+    })();
+  </script>
+  <script>
+    (function() {
+      if (typeof window !== 'undefined' && window.crypto && !window.crypto.subtle) {
+        function sha256(ascii) {
+          function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
+          var mathPow = Math.pow, maxWord = mathPow(2, 32), words = [];
+          var asciiBitLength = ascii.length * 8;
+          var hash = sha256.h = sha256.h || [], k = sha256.k = sha256.k || [];
+          var primeCounter = k.length, isComposite = {};
+          for (var candidate = 2; primeCounter < 64; candidate++) {
+            if (!isComposite[candidate]) {
+              for (var i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+              hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+              k[primeCounter++] = (mathPow(candidate, 1/3) * maxWord) | 0;
+            }
+          }
+          hash = hash.slice(0);
+          for (var i = 0; i < ascii.length; i++) words[i >> 2] |= (ascii[i] & 0xff) << (24 - (i % 4) * 8);
+          words[asciiBitLength >> 5] |= 0x80 << (24 - (asciiBitLength % 32));
+          words[(((asciiBitLength + 64) >> 9) << 4) + 15] = asciiBitLength;
+          for (var i = 0; i < words.length; i += 16) {
+            var w = words.slice(i, i + 16), oldHash = hash.slice(0);
+            for (var j = 0; j < 64; j++) {
+              var w15 = w[j - 15], w2 = w[j - 2];
+              var s0 = rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3);
+              var s1 = rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10);
+              w[j] = j < 16 ? w[j] : (w[j - 16] + s0 + w[j - 7] + s1) | 0;
+              var ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
+              var maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
+              var t1 = hash[7] + (rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25)) + ch + k[j] + (w[j] | 0);
+              var t2 = (rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22)) + maj;
+              hash = [(t1 + t2) | 0, hash[0], hash[1], hash[2], (hash[3] + t1) | 0, hash[4], hash[5], hash[6]];
+            }
+            for (var j = 0; j < 8; j++) hash[j] = (hash[j] + oldHash[j]) | 0;
+          }
+          var buffer = new ArrayBuffer(32), view = new DataView(buffer);
+          for (var i = 0; i < 8; i++) view.setUint32(i * 4, hash[i], false);
+          return buffer;
+        }
+
+        window.crypto.subtle = {
+          digest: function(algorithm, data) {
+            return new Promise(function(resolve) {
+              var u8;
+              if (data instanceof ArrayBuffer) u8 = new Uint8Array(data);
+              else if (ArrayBuffer.isView(data)) u8 = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+              else if (typeof data === 'string') u8 = new TextEncoder().encode(data);
+              else u8 = new Uint8Array(data);
+              resolve(sha256(u8));
+            });
+          }
+        };
+      }
+    })();
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

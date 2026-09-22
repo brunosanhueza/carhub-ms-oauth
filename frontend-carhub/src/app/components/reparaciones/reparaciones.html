@@ -1,0 +1,139 @@
+<div class="rep-page">
+
+  <!-- Header -->
+  <div class="rep-header vista-window">
+    <div class="rep-brand">
+      <h2>Car<span>Hub</span> — Reparaciones</h2>
+      <p>Piezas y repuestos disponibles para tu vehículo</p>
+    </div>
+    <div class="rep-actions">
+      <button class="aero-btn btn-tab" [class.active]="vistaActiva === 'catalogo'" (click)="vistaActiva = 'catalogo'">
+        Ver piezas
+      </button>
+      <button class="aero-btn btn-tab" [class.active]="vistaActiva === 'agregar'" (click)="vistaActiva = 'agregar'">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Agregar pieza</span>
+      </button>
+      <button class="aero-btn btn-volver" (click)="volver()">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <span>Volver</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Vista: Catálogo de piezas -->
+  <div class="rep-body" *ngIf="vistaActiva === 'catalogo'">
+
+    <div class="search-bar">
+      <input type="text" placeholder="Buscar por marca, modelo o tipo de pieza..." (input)="filtrar($event)" />
+    </div>
+
+    <div class="piezas-grid" *ngIf="piezasFiltradas.length > 0; else sinPiezas">
+      <div class="pieza-card vista-window" *ngFor="let pieza of piezasFiltradas">
+        <div class="pieza-icon">
+          <svg class="aero-wrench-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+          </svg>
+        </div>
+        <div class="pieza-info">
+          <h4>{{ pieza.nombrePieza }}</h4>
+          <span class="badge" [class.original]="pieza.tipoMarcaPieza === 'ORIGINAL'"
+                               [class.alternativo]="pieza.tipoMarcaPieza === 'ALTERNATIVO'">
+            {{ pieza.tipoMarcaPieza }}
+          </span>
+          <ul>
+            <li><strong>Tipo:</strong> {{ pieza.tipoPieza }}</li>
+            <li><strong>Material:</strong> {{ pieza.materialPieza }}</li>
+            <li><strong>Vehículo:</strong> {{ pieza.marcaVehiculo }} {{ pieza.modeloVehiculo }}</li>
+            <li><strong>Stock:</strong> {{ pieza.stockPieza }} unidades</li>
+            <li *ngIf="pieza.descripcionPieza"><strong>Descripción:</strong> {{ pieza.descripcionPieza }}</li>
+          </ul>
+          <p class="precio">${{ pieza.precioPieza | number }} CLP</p>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #sinPiezas>
+      <p class="empty-msg">No hay piezas registradas aún.</p>
+    </ng-template>
+
+  </div>
+
+  <!-- Vista: Agregar pieza -->
+  <div class="rep-body form-body vista-window" *ngIf="vistaActiva === 'agregar'">
+    <div class="form-window-header">
+      <h3>Registrar nueva pieza</h3>
+      <p>Ingresa los detalles técnicos y disponibilidad del repuesto</p>
+    </div>
+    <form [formGroup]="piezaForm" (ngSubmit)="registrar()">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vehículo asociado</label>
+          <select formControlName="idVehiculo">
+            <option value="" disabled>Selecciona un vehículo</option>
+            <option *ngFor="let v of vehiculos" [value]="v.idVehiculo">
+              {{ v.marcaVehiculo }} {{ v.modeloVehiculo }} ({{ v.anioVehiculo }})
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de pieza</label>
+          <select formControlName="tipoPieza">
+            <option value="" disabled>Selecciona tipo</option>
+            <option *ngFor="let t of tiposPieza" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre de la pieza</label>
+          <input type="text" formControlName="nombrePieza" placeholder="Ej: Parachoques delantero" />
+        </div>
+
+        <div class="form-group">
+          <label>Material</label>
+          <select formControlName="materialPieza">
+            <option value="" disabled>Selecciona material</option>
+            <option *ngFor="let m of materiales" [value]="m">{{ m }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Precio (CLP)</label>
+          <input type="number" formControlName="precioPieza" placeholder="Ej: 85000" min="0" />
+        </div>
+
+        <div class="form-group">
+          <label>Stock disponible</label>
+          <input type="number" formControlName="stockPieza" placeholder="Ej: 10" min="1" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de marca</label>
+          <select formControlName="tipoMarcaPieza">
+            <option value="ORIGINAL">ORIGINAL</option>
+            <option value="ALTERNATIVO">ALTERNATIVO</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Descripción (opcional)</label>
+          <input type="text" formControlName="descripcionPieza" placeholder="Notas adicionales..." />
+        </div>
+      </div>
+
+      <button type="submit" class="aero-btn aero-btn-blue btn-submit" [disabled]="piezaForm.invalid || enviando">
+        {{ enviando ? 'Registrando...' : 'Registrar pieza' }}
+      </button>
+
+    </form>
+  </div>
+
+</div>

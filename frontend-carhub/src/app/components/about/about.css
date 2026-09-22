@@ -1,0 +1,21 @@
+.main-container{
+    background: #000;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-login {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid white;
+    color: white;
+}
+
+.btn-register{
+    background-color: cyan;
+    border: cyan;
+    padding: 12px;
+    border-radius: 25px;
+}

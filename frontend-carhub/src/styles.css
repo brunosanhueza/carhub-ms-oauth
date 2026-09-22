@@ -1,0 +1,227 @@
+/* ==========================================================================
+   CARHUB - FRUTIGER AERO / WINDOWS VISTA DESIGN SYSTEM
+   ========================================================================== */
+
+/* Windows Vista Segoe UI font stack used natively */
+
+:root {
+  /* Windows Vista Aurora Palette */
+  --aero-bg: radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.4) 0%, transparent 45%),
+             radial-gradient(circle at 85% 75%, rgba(52, 211, 153, 0.3) 0%, transparent 45%),
+             radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.25) 0%, transparent 60%),
+             linear-gradient(145deg, #07192f 0%, #0c2d48 40%, #0e3b5e 70%, #062338 100%);
+  
+  /* Aero Glass Materials */
+  --aero-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%);
+  --aero-glass-border: 1px solid rgba(255, 255, 255, 0.45);
+  --aero-glass-border-subtle: 1px solid rgba(255, 255, 255, 0.25);
+  --aero-glass-shadow: 0 16px 40px rgba(0, 15, 40, 0.45),
+                       inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                       inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  --aero-glass-specular: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 51%);
+
+  /* Vista Primary Colors */
+  --aero-blue: #0284c7;
+  --aero-blue-glow: rgba(56, 189, 248, 0.7);
+  --aero-cyan: #06b6d4;
+  --aero-green: #10b981;
+  --aero-green-glow: rgba(52, 211, 153, 0.7);
+  
+  /* Typography */
+  --text-main: #f8fafc;
+  --text-title: #ffffff;
+  --text-muted: #cbd5e1;
+  --text-glow: 0 0 10px rgba(255, 255, 255, 0.45);
+
+  /* Inputs & Controls */
+  --aero-input-bg: rgba(7, 25, 48, 0.65);
+  --aero-input-border: 1px solid rgba(255, 255, 255, 0.3);
+  --aero-input-focus: 0 0 12px rgba(56, 189, 248, 0.8), inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--aero-bg);
+  background-attachment: fixed;
+  color: var(--text-main);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Vista Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(7, 25, 48, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(56, 189, 248, 0.6) 100%);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(14, 165, 233, 0.8) 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+}
+
+/* Windows Vista Window Container */
+.vista-window {
+  background: var(--aero-glass-bg);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border: var(--aero-glass-border);
+  border-radius: 12px;
+  box-shadow: var(--aero-glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.vista-window::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: var(--aero-glass-specular);
+  pointer-events: none;
+  border-top-left-radius: 11px;
+  border-top-right-radius: 11px;
+}
+
+/* Windows Vista Title Bar */
+.vista-titlebar {
+  height: 38px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.1) 49%, rgba(0, 0, 0, 0.1) 51%, rgba(255, 255, 255, 0.05) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.vista-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.vista-btn-ctrl {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.vista-btn-ctrl.min { background: linear-gradient(180deg, #fef08a 0%, #eab308 100%); }
+.vista-btn-ctrl.max { background: linear-gradient(180deg, #bbf7d0 0%, #22c55e 100%); }
+.vista-btn-ctrl.close { background: linear-gradient(180deg, #fecaca 0%, #ef4444 100%); }
+
+/* Glossy Vista Buttons */
+.aero-btn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.15) 49%, rgba(0, 0, 0, 0.05) 51%, rgba(0, 0, 0, 0.15) 100%),
+              linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 22px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 3px 8px rgba(0, 15, 40, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.aero-btn:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.25) 49%, rgba(0, 0, 0, 0.02) 51%, rgba(0, 0, 0, 0.1) 100%),
+              linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 15px var(--aero-blue-glow);
+  transform: translateY(-1px);
+}
+
+.aero-btn:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.aero-btn.green {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.15) 49%, rgba(0, 0, 0, 0.05) 51%, rgba(0, 0, 0, 0.15) 100%),
+              linear-gradient(180deg, #10b981 0%, #047857 100%);
+}
+
+.aero-btn.green:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.25) 49%, rgba(0, 0, 0, 0.02) 51%, rgba(0, 0, 0, 0.1) 100%),
+              linear-gradient(180deg, #34d399 0%, #059669 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 15px var(--aero-green-glow);
+}
+
+.aero-btn.secondary {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 49%, rgba(0, 0, 0, 0.1) 51%, rgba(0, 0, 0, 0.25) 100%),
+              rgba(15, 35, 60, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.aero-btn.secondary:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 49%, rgba(0, 0, 0, 0.05) 51%, rgba(0, 0, 0, 0.15) 100%),
+              rgba(30, 58, 95, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+/* Aero Inputs */
+.aero-input {
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--aero-input-bg);
+  border: var(--aero-input-border);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.2);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.aero-input:focus {
+  border-color: #38bdf8;
+  box-shadow: var(--aero-input-focus);
+}
+
+.aero-input::placeholder {
+  color: rgba(203, 213, 225, 0.55);
+}
+
+/* Utility SVG Icons (Zero Emojis) */
+.aero-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  vertical-align: middle;
+  fill: currentColor;
+}

@@ -1,0 +1,52 @@
+<!-- Botón flotante SOS Aero -->
+<button class="sos-btn aero-btn-sos" (click)="abrirModal()" title="Atención al cliente">
+  <span>SOS</span>
+</button>
+
+<!-- Modal de reclamo Vista Aero -->
+<div class="modal-overlay" *ngIf="mostrarModal" (click)="cerrarModal()">
+  <div class="modal-card vista-window" (click)="$event.stopPropagation()">
+
+    <div class="vista-titlebar">
+      <div class="vista-title-text">
+        <span>Atención al Cliente :: CarHub</span>
+      </div>
+      <div class="vista-controls">
+        <span class="vista-btn-ctrl close" (click)="cerrarModal()"></span>
+      </div>
+    </div>
+
+    <div class="modal-body" *ngIf="!enviado">
+      <div class="form-group">
+        <label>Tipo de reclamo</label>
+        <select [(ngModel)]="tipoReclamo">
+          <option value="" disabled>Selecciona una opción</option>
+          <option *ngFor="let tipo of tiposReclamo" [value]="tipo">{{ tipo }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea
+          [(ngModel)]="descripcionReclamo"
+          rows="4"
+          placeholder="Explica tu problema con detalle...">
+        </textarea>
+      </div>
+
+      <button class="aero-btn aero-btn-blue btn-enviar" (click)="enviarReclamo()" [disabled]="enviando || !tipoReclamo || !descripcionReclamo">
+        {{ enviando ? 'Enviando...' : 'Enviar reclamo' }}
+      </button>
+    </div>
+
+    <div class="modal-body enviado" *ngIf="enviado">
+      <div class="success-icon-wrap">
+        <svg class="check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <h4>¡Reclamo enviado con éxito!</h4>
+      <p>Nos pondremos en contacto contigo a la brevedad.</p>
+      <button class="aero-btn aero-btn-blue btn-enviar" (click)="cerrarModal()">Cerrar</button>
+    </div>
+
+  </div>
+</div>

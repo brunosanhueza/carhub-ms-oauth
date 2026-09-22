@@ -1,0 +1,18 @@
+===========================================================
+  PUERTOS Y BASES DE DATOS DE LOS MICROSERVICIOS (MySQL)
+===========================================================
+
+Microservicio:            Puerto:   Base de Datos (MySQL):
+-----------------------------------------------------------
+backend-automotriz        8061      automotriz
+backend-carhub-vehiculo   8062      vehiculos
+backend-piezas            8063      piezas
+backend-reclamos          8064      reclamos
+backend-compra            8065      compra
+backend-carhub            8066      usuarios
+
+-----------------------------------------------------------
+Host de Base de Datos:    100.57.199.0:3306
+Usuario:                  root
+Contraseña:               chocolate
+===========================================================

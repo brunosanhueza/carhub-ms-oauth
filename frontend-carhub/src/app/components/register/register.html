@@ -1,0 +1,67 @@
+<div class="auth-container">
+  <div class="vista-window auth-card">
+    <div class="vista-titlebar">
+      <div class="vista-title-text">
+        <span>CarHub :: Registro de Usuario</span>
+      </div>
+      <div class="vista-controls">
+        <span class="vista-btn-ctrl min"></span>
+        <span class="vista-btn-ctrl max"></span>
+        <span class="vista-btn-ctrl close"></span>
+      </div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-header">
+        <h2>Car<span>Hub</span></h2>
+        <p>Crea tu cuenta para acceder al catálogo exclusivo de concesionaria.</p>
+      </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <div class="form-group">
+        <label for="name">Nombre Completo</label>
+        <input type="text" id="name" formControlName="nameUser" placeholder="Juan Pérez" />
+        @if (registerForm.get('nameUser')?.touched && registerForm.get('nameUser')?.invalid) {
+          <small class="error-msg">El nombre debe tener al menos 3 caracteres</small>
+        }
+      </div>
+
+       <div class="form-group">
+        <label for="emailUser">Correo Electrónico</label>
+        <input type="emailUser" id="emailUser" formControlName="emailUser" placeholder="ejemplo@carhub.com" />
+        @if (registerForm.get('emailUser')?.touched && registerForm.get('emailUser')?.invalid) {
+          @if (registerForm.get('emailUser')?.errors?.['emailUser'] || registerForm.get('emailUser')?.errors?.['required']) {
+            <small class="error-msg">Ingresa un correo electrónico válido.</small>
+          }
+        @if (registerForm.get('emailUser')?.errors?.['dominioInvalido']) {
+          <small class="error-msg">Por favor ingrese un dominio valido (Ej: Gmail, Hotmail, Outlook, etc).</small>
+        }
+      }
+    </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" formControlName="passwordUser" placeholder="••••••••" />
+        @if (registerForm.get('passwordUser')?.touched && registerForm.get('passwordUser')?.invalid) {
+          <small class="error-msg">La contraseña debe tener al menos 6 caracteres</small>
+        }
+      </div>
+
+      <div class="form-group"> 
+        <label for="tel">Número telefonico</label>
+        <input type="tel" id="numberCel" formControlName="phoneUser" placeholder="912341234"/>
+        @if (registerForm.get('phoneUser')?.touched && registerForm.get('phoneUser')?.invalid) {
+          <small class="error-msg">El número debe ser válido</small>
+        }
+      </div>
+
+      <button type="submit" [disabled]="registerForm.invalid" class="btn-submit">
+        Crear Cuenta
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>¿Ya tienes una cuenta? <a routerLink="/login">Inicia sesión aquí</a></p>
+    </div>
+    </div> <!-- /auth-body -->
+  </div> <!-- /vista-window -->
+</div> <!-- /auth-container -->

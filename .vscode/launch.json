@@ -1,0 +1,65 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-CompraApplication<compra>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.loquendodev.compra.CompraApplication",
+            "projectName": "compra",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-AutomotrizApplication<automotriz>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.zacky.automotriz.AutomotrizApplication",
+            "projectName": "automotriz",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-CarhubApplication<carhub>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.loquendodev.carhub.CarhubApplication",
+            "projectName": "carhub",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-PiezasApplication<piezas>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.zacky.piezas.PiezasApplication",
+            "projectName": "piezas",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ReclamosApplication<reclamos>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.zacky.reclamos.ReclamosApplication",
+            "projectName": "reclamos",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-VehiculosApplication<vehiculos>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.loquendodev.vehiculos.VehiculosApplication",
+            "projectName": "vehiculos",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

@@ -1,0 +1,163 @@
+:host {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  width: 100vw !important;
+  height: 100vh !important;
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.4) 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(52, 211, 153, 0.3) 0%, transparent 45%),
+    linear-gradient(135deg, rgba(7, 25, 48, 0.88) 0%, rgba(12, 45, 72, 0.82) 100%),
+    url('https://fuelcarmagazine.com/wp-content/uploads/2022/06/Prodrive-Subaru-Impreza.jpg') no-repeat !important;
+  background-size: cover !important;
+  background-position: center center !important;
+}
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  padding: 20px;
+}
+
+.auth-card {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: 0 24px 48px rgba(0, 15, 40, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.9),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.auth-body {
+  padding: 24px 32px 30px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.auth-header h2 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  color: #ffffff;
+  text-shadow: 0 0 15px rgba(56, 189, 248, 0.6), 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.auth-header h2 span {
+  color: #38bdf8;
+  text-shadow: 0 0 18px rgba(56, 189, 248, 0.9);
+}
+
+.auth-header p {
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 0.82rem;
+  color: #f1f5f9;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.form-group input {
+  background: rgba(7, 25, 48, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.25s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.8), inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.error-msg {
+  color: #fca5a5;
+  font-size: 0.78rem;
+  margin-top: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.btn-submit {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 49%, rgba(0, 0, 0, 0.05) 51%, rgba(0, 0, 0, 0.18) 100%),
+              linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  padding: 12px;
+  border-radius: 20px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 10px rgba(0, 20, 10, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s ease;
+  margin-top: 6px;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.25) 49%, rgba(0, 0, 0, 0.02) 51%, rgba(0, 0, 0, 0.1) 100%),
+              linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 16px rgba(56, 189, 248, 0.8);
+  transform: translateY(-1px);
+}
+
+.btn-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+}
+
+.auth-footer a {
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.auth-footer a:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+}

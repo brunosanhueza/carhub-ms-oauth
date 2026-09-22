@@ -1,0 +1,90 @@
+<div class="compra-container">
+
+  <div class="compra-header">
+    <button class="btn-volver" (click)="volver()">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <span>Volver</span>
+    </button>
+    <h2>Confirmar <span>Compra</span></h2>
+  </div>
+
+  @if (!facturaGenerada) {
+    <div class="compra-content">
+
+      <!-- Datos del usuario -->
+      <div class="compra-card">
+        <h3>Datos del Comprador</h3>
+        @if (usuarioLogueado) {
+          <ul class="info-list">
+            <li><strong>Nombre:</strong> {{ usuarioLogueado.nameUser }}</li>
+            <li><strong>Email:</strong> {{ usuarioLogueado.emailUser }}</li>
+            <li><strong>Teléfono:</strong> {{ usuarioLogueado.phoneUser }}</li>
+          </ul>
+        }
+      </div>
+
+      <!-- Datos del vehiculo -->
+      <div class="compra-card">
+        <h3>Vehículo Seleccionado</h3>
+        @if (vehiculo) {
+          <ul class="info-list">
+            <li><strong>Marca:</strong> {{ vehiculo.marcaVehiculo }}</li>
+            <li><strong>Modelo:</strong> {{ vehiculo.modeloVehiculo }}</li>
+            <li><strong>Año:</strong> {{ vehiculo.anioVehiculo }}</li>
+            <li><strong>Combustible:</strong> {{ vehiculo.tipoBencinaVehiculo }}</li>
+            <li><strong>Transmisión:</strong> {{ vehiculo.tipoTransmisionVehiculo }}</li>
+            <li><strong>Propulsión:</strong> {{ vehiculo.tipoPropulsionVehiculo }}</li>
+          </ul>
+        }
+      </div>
+
+      <!-- Método de pago y subtotal -->
+      <div class="compra-card">
+        <h3>Detalle de Pago</h3>
+        <div class="form-group">
+          <label>Método de Pago</label>
+          <select [(ngModel)]="metodoPago">
+            <option value="Credito">Crédito</option>
+            <option value="Debito">Débito</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Efectivo">Efectivo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Precio Total (CLP)</label>
+          <p class="precio-display">${{ vehiculo?.precioVehiculo | number }} CLP</p>
+        </div>
+      </div>
+
+      <button class="btn-confirmar" (click)="confirmarCompra()" [disabled]="cargando">
+        @if (cargando) {
+          Generando factura...
+        } @else {
+          Confirmar Compra
+        }
+      </button>
+
+    </div>
+  }
+
+  <!-- Factura generada -->
+  @if (facturaGenerada) {
+    <div class="factura-container">
+      <h3 class="compra-exitosa-title">
+        <svg class="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>¡Compra realizada exitosamente!</span>
+      </h3>
+      <div class="factura-card">
+        <p><strong>N° Factura:</strong> {{ facturaGenerada.nro_factura }}</p>
+        <p><strong>Fecha:</strong> {{ facturaGenerada.fecha_emision_factura | date:'dd/MM/yyyy HH:mm' }}</p>
+        <p><strong>Comprador:</strong> {{ facturaGenerada.nameUser }}</p>
+        <p><strong>Email:</strong> {{ facturaGenerada.emailUser }}</p>
+        <p><strong>Vehículo:</strong> {{ facturaGenerada.marcaVehiculo }} {{ facturaGenerada.modeloVehiculo }}</p>
+        <p><strong>Método de Pago:</strong> {{ facturaGenerada.metodo_pago_factura }}</p>
+        <p><strong>Total:</strong> ${{ facturaGenerada.subtotal_factura | number }} CLP</p>
+      </div>
+      <button class="btn-volver" (click)="volver()">Volver al Dashboard</button>
+    </div>
+  }
+
+</div>

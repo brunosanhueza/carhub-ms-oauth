@@ -1,0 +1,245 @@
+.vehiculo-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.35) 0%, transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(52, 211, 153, 0.25) 0%, transparent 45%),
+    linear-gradient(135deg, rgba(7, 25, 48, 0.92) 0%, rgba(12, 45, 72, 0.88) 100%),
+    url('https://fuelcarmagazine.com/wp-content/uploads/2022/06/Prodrive-Subaru-Impreza.jpg') no-repeat center center fixed;
+  background-size: cover;
+  padding: 18px 30px;
+  color: #f1f5f9;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+}
+
+.vehiculo-nav-header {
+  border-radius: 12px;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.vehiculo-nav-brand h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.6), 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.vehiculo-nav-brand h2 span {
+  color: #38bdf8;
+  text-shadow: 0 0 16px rgba(56, 189, 248, 0.9);
+}
+
+.btn-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  border-radius: 20px;
+  background: rgba(7, 25, 48, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.25s ease;
+}
+
+.btn-volver:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.vehiculo-container {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: flex-start;
+}
+
+.form-section {
+  flex: 0 0 400px;
+  position: sticky;
+  top: 20px;
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-sizing: border-box;
+}
+
+.form-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.header-icon {
+  width: 24px;
+  height: 24px;
+  color: #38bdf8;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
+}
+
+.form-card-header h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.form-group input,
+.form-group select {
+  background: rgba(7, 25, 48, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #ffffff;
+  font-size: 0.92rem;
+  outline: none;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.25s ease;
+  font-family: inherit;
+}
+
+.form-group select option {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.8), inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.error-msg {
+  color: #fca5a5;
+  font-size: 0.76rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.msg-exito {
+  color: #86efac;
+  font-size: 0.88rem;
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 8px;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+}
+
+.msg-error {
+  color: #fca5a5;
+  font-size: 0.88rem;
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+}
+
+.btn-submit {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  font-size: 0.95rem;
+}
+
+.lista-section {
+  flex: 1;
+}
+
+.lista-title {
+  margin: 0 0 18px 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5), 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.vehiculos-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vehiculo-card {
+  border-radius: 12px;
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vehiculo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(0, 15, 35, 0.5), 0 0 16px rgba(56, 189, 248, 0.35);
+}
+
+.card-prop {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 0.9rem;
+}
+
+.card-prop.full-width {
+  grid-column: 1 / -1;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.prop-label {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.prop-val {
+  color: #f1f5f9;
+}
+
+.precio-highlight {
+  color: #38bdf8 !important;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+
+.no-cars {
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+

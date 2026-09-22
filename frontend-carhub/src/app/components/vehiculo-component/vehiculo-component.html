@@ -1,0 +1,136 @@
+<div class="vehiculo-page">
+
+  <div class="vehiculo-nav-header vista-window">
+    <div class="vehiculo-nav-brand">
+      <h2>Car<span>Hub</span> — Gestión de Vehículos</h2>
+    </div>
+    <button class="aero-btn btn-volver" (click)="volver()">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <span>Volver al Dashboard</span>
+    </button>
+  </div>
+
+  <div class="vehiculo-container">
+
+    <div class="form-section vista-window">
+      <div class="form-card-header">
+        <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9C2.1 11.2 2 11.6 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2.5"></circle><circle cx="17" cy="17" r="2.5"></circle></svg>
+        <h3>Registrar Vehículo</h3>
+      </div>
+
+      @if (msgOK) {
+        <p class="msg-exito">{{ msgOK }}</p>
+      }
+      @if (msgERR) {
+        <p class="msg-error">{{ msgERR }}</p>
+      }
+
+      <form [formGroup]="VehiculoForm" (ngSubmit)="onSubmit()">
+
+        <div class="form-group">
+          <label>Marca</label>
+          <input type="text" formControlName="marcaVehiculo" placeholder="Toyota" />
+          @if (VehiculoForm.get('marcaVehiculo')?.touched && VehiculoForm.get('marcaVehiculo')?.invalid) {
+            <small class="error-msg">La marca es obligatoria</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Modelo</label>
+          <input type="text" formControlName="modeloVehiculo" placeholder="Corolla" />
+          @if (VehiculoForm.get('modeloVehiculo')?.touched && VehiculoForm.get('modeloVehiculo')?.invalid) {
+            <small class="error-msg">El modelo es obligatorio</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Año</label>
+          <input type="text" formControlName="anioVehiculo" placeholder="2024" />
+          @if (VehiculoForm.get('anioVehiculo')?.touched && VehiculoForm.get('anioVehiculo')?.invalid) {
+            <small class="error-msg">El año es obligatorio</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Bencina</label>
+          <select formControlName="tipoBencinaVehiculo">
+            <option value="">Selecciona...</option>
+            <option value="93">93</option>
+            <option value="95">95</option>
+            <option value="97">97</option>
+            <option value="Diesel">Diesel</option>
+            <option value="Electrico">Eléctrico</option>
+            <option value="Hibrido">Híbrido</option>
+          </select>
+          @if (VehiculoForm.get('tipoBencinaVehiculo')?.touched && VehiculoForm.get('tipoBencinaVehiculo')?.invalid) {
+            <small class="error-msg">El tipo de bencina es obligatorio</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Transmisión</label>
+          <select formControlName="tipoTransmisionVehiculo">
+            <option value="">Selecciona...</option>
+            <option value="Manual">Manual</option>
+            <option value="Automatico">Automático</option>
+            <option value="CVT">CVT</option>
+          </select>
+          @if (VehiculoForm.get('tipoTransmisionVehiculo')?.touched && VehiculoForm.get('tipoTransmisionVehiculo')?.invalid) {
+            <small class="error-msg">El tipo de transmisión es obligatorio</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Propulsión</label>
+          <select formControlName="tipoPropulsionVehiculo">
+            <option value="">Selecciona...</option>
+            <option value="FWD">FWD (Delantera)</option>
+            <option value="RWD">RWD (Trasera)</option>
+            <option value="AWD">AWD (Total)</option>
+            <option value="4WD">4WD (4x4)</option>
+          </select>
+          @if (VehiculoForm.get('tipoPropulsionVehiculo')?.touched && VehiculoForm.get('tipoPropulsionVehiculo')?.invalid) {
+            <small class="error-msg">El tipo de propulsión es obligatorio</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Precio (CLP)</label>
+          <input type="number" formControlName="precioVehiculo" placeholder="Ej: 15000000" />
+          @if (VehiculoForm.get('precioVehiculo')?.touched && VehiculoForm.get('precioVehiculo')?.invalid) {
+            <small class="error-msg">El precio es obligatorio</small>
+          }
+        </div>
+
+        <button type="submit" class="aero-btn aero-btn-blue btn-submit" [disabled]="VehiculoForm.invalid">
+          Registrar Vehículo
+        </button>
+
+      </form>
+    </div>
+
+    <div class="lista-section">
+      <h3 class="lista-title">Vehículos Registrados</h3>
+
+      @if (vehiculos.length === 0) {
+        <p class="no-cars">No hay vehículos registrados aún.</p>
+      }
+
+      <div class="vehiculos-list-grid">
+        @for (vehiculo of vehiculos; track vehiculo.idVehiculo) {
+          <div class="vehiculo-card vista-window">
+            <div class="card-prop"><span class="prop-label">Marca:</span> <span class="prop-val">{{ vehiculo.marcaVehiculo }}</span></div>
+            <div class="card-prop"><span class="prop-label">Modelo:</span> <span class="prop-val">{{ vehiculo.modeloVehiculo }}</span></div>
+            <div class="card-prop"><span class="prop-label">Año:</span> <span class="prop-val">{{ vehiculo.anioVehiculo }}</span></div>
+            <div class="card-prop"><span class="prop-label">Bencina:</span> <span class="prop-val">{{ vehiculo.tipoBencinaVehiculo }}</span></div>
+            <div class="card-prop"><span class="prop-label">Transmisión:</span> <span class="prop-val">{{ vehiculo.tipoTransmisionVehiculo }}</span></div>
+            <div class="card-prop"><span class="prop-label">Propulsión:</span> <span class="prop-val">{{ vehiculo.tipoPropulsionVehiculo }}</span></div>
+            <div class="card-prop full-width"><span class="prop-label">Precio:</span> <span class="prop-val precio-highlight">${{ vehiculo.precioVehiculo | number }} CLP</span></div>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-AutomotrizApplication<automotriz>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.zacky.automotriz.AutomotrizApplication",
+            "projectName": "automotriz",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

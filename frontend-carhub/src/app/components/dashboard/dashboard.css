@@ -1,0 +1,464 @@
+.dashboard-page-container {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.35) 0%, transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(52, 211, 153, 0.25) 0%, transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(14, 165, 233, 0.2) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(7, 25, 48, 0.92) 0%, rgba(12, 45, 72, 0.88) 100%),
+    url('https://www.c3carecarcenter.com/wp-content/uploads/2025/05/Descubre-la-mejor-concesionaria-de-autos-usados-para-ti-1038x576.webp') no-repeat center center !important;
+  background-size: cover !important;
+  background-attachment: fixed !important;
+  color: #f1f5f9;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 70px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(7, 25, 48, 0.75) 51%, rgba(7, 25, 48, 0.88) 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  padding: 10px 30px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  z-index: 999;
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: 0 4px 20px rgba(0, 15, 35, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.brand-container h2 {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.6), 0 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.5px;
+}
+
+.brand-container h2 span {
+  color: #38bdf8;
+  text-shadow: 0 0 16px rgba(56, 189, 248, 0.9);
+}
+
+.subtitle {
+  margin: 4px 0 0 0;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.dashboard-wrapper {
+  flex: 1 1 auto;
+  overflow-y: auto !important;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 15px 20px 40px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.store-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.catalog-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5), 0 2px 4px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.3px;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 22px;
+}
+
+.product-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.05) 60%, rgba(7, 25, 48, 0.6) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  box-shadow: 0 14px 30px rgba(0, 15, 35, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 20px 40px rgba(0, 20, 50, 0.6), 0 0 20px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.product-img-placeholder {
+  height: 130px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.15) 0%, rgba(7, 25, 48, 0.7) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.aero-car-svg {
+  width: 56px;
+  height: 56px;
+  color: #38bdf8;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.7));
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .aero-car-svg {
+  transform: scale(1.08);
+  color: #7dd3fc;
+}
+
+.product-info {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+.product-info h4 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.product-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.35;
+}
+
+.btn-details {
+  margin-top: auto;
+  width: 100%;
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.action-buttons-stack {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.btn-icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.2;
+}
+
+.btn-add-vehiculo, .btn-reparaciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 0.86rem;
+}
+
+.aero-btn-amber {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 49%, rgba(0, 0, 0, 0.05) 51%, rgba(0, 0, 0, 0.18) 100%),
+              linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 3px 8px rgba(0, 15, 30, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.aero-btn-amber:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.25) 49%, rgba(0, 0, 0, 0.02) 51%, rgba(0, 0, 0, 0.12) 100%),
+              linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 15px rgba(245, 158, 11, 0.8);
+  transform: translateY(-1px);
+}
+
+.perfil-container {
+  position: relative;
+}
+
+.btn-perfil {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.18) 49%, rgba(0, 0, 0, 0.05) 51%, rgba(0, 0, 0, 0.18) 100%),
+              linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 14px rgba(56, 189, 248, 0.6);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: all 0.25s ease;
+}
+
+.btn-perfil:hover {
+  transform: scale(1.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 20px rgba(56, 189, 248, 0.9);
+}
+
+.icon-avatar {
+  width: 20px;
+  height: 20px;
+}
+
+.perfil-dropdown {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  min-width: 220px;
+  border-radius: 10px;
+  z-index: 1000;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(0, 15, 35, 0.6);
+}
+
+.dropdown-user-info {
+  padding: 14px 18px;
+  background: rgba(7, 25, 48, 0.5);
+}
+
+.dropdown-nombre {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: #f1f5f9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.dropdown-email {
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.dropdown-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin: 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 18px;
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.25) 0%, rgba(56, 189, 248, 0.08) 100%);
+  color: #ffffff;
+}
+
+.dropdown-item.danger {
+  color: #fca5a5;
+}
+
+.dropdown-item.danger:hover {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.08) 100%);
+  color: #ffffff;
+}
+
+/* Modales Vista Aero */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 15, 30, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-card {
+  width: 440px;
+  max-width: 95vw;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 15, 40, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.modal-wide {
+  width: 620px;
+}
+
+.modal-body {
+  padding: 22px 26px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Mi cuenta modal */
+.cuenta-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(0, 0, 0, 0.1) 100%),
+              linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 auto 20px;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.icon-avatar-lg {
+  width: 32px;
+  height: 32px;
+}
+
+.cuenta-datos {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cuenta-datos li {
+  font-size: 13.5px;
+  color: #cbd5e1;
+  padding: 11px 16px;
+  background: rgba(7, 25, 48, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.id-badge {
+  background: rgba(56, 189, 248, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #7dd3fc;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* Facturas */
+.factura-card {
+  border-radius: 10px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.factura-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 18px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.3) 0%, rgba(7, 25, 48, 0.6) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.factura-nro {
+  font-weight: 700;
+  color: #38bdf8;
+  font-size: 14px;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+
+.factura-fecha {
+  font-size: 12.5px;
+  color: #94a3b8;
+}
+
+.factura-body {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  background: rgba(7, 25, 48, 0.5);
+}
+
+.factura-body p {
+  margin: 0;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.factura-total {
+  color: #38bdf8 !important;
+  font-size: 15px !important;
+  font-weight: 700;
+  margin-top: 6px !important;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.modal-loading, .modal-empty, .no-cars {
+  text-align: center;
+  color: #cbd5e1;
+  padding: 30px 0;
+  font-size: 0.95rem;
+}
+
+app-footer-component {
+  width: 100%;
+  margin-top: 40px;
+  display: block;
+}
