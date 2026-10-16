@@ -1,14 +1,6 @@
 package com.loquendodev.carhub.models.entity;
 
-
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Entity
-
 public class Usuario {
 
     @Id
@@ -41,4 +32,52 @@ public class Usuario {
     @Column(name = "Rol_usuario", nullable = false)
     private RolUsuario rolUsuario = RolUsuario.USUARIO;
 
+    // Métodos getter y setter explícitos para evitar fallos de bytecode (Code length 0) en Java 25 / VS Code
+    public Integer getIdUser() {
+        return idUser;
+    }
+
+    public void setIdUser(Integer idUser) {
+        this.idUser = idUser;
+    }
+
+    public String getNameUser() {
+        return nameUser;
+    }
+
+    public void setNameUser(String nameUser) {
+        this.nameUser = nameUser;
+    }
+
+    public String getEmailUser() {
+        return emailUser;
+    }
+
+    public void setEmailUser(String emailUser) {
+        this.emailUser = emailUser;
+    }
+
+    public String getPasswordUser() {
+        return passwordUser;
+    }
+
+    public void setPasswordUser(String passwordUser) {
+        this.passwordUser = passwordUser;
+    }
+
+    public String getPhoneUser() {
+        return phoneUser;
+    }
+
+    public void setPhoneUser(String phoneUser) {
+        this.phoneUser = phoneUser;
+    }
+
+    public RolUsuario getRolUsuario() {
+        return rolUsuario;
+    }
+
+    public void setRolUsuario(RolUsuario rolUsuario) {
+        this.rolUsuario = rolUsuario;
+    }
 }

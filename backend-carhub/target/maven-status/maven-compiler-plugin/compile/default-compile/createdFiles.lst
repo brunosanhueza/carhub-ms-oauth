@@ -1,0 +1,17 @@
+com\loquendodev\carhub\models\dto\ExchangeRequestDto.class
+com\loquendodev\carhub\config\SecurityConfig$MicrosoftIssuerValidator.class
+com\loquendodev\carhub\config\SecurityConfig$AudienceValidator.class
+com\loquendodev\carhub\models\dto\UsuarioDto.class
+com\loquendodev\carhub\models\entity\RolUsuario.class
+com\loquendodev\carhub\services\UsuarioService.class
+com\loquendodev\carhub\config\GlobalExceptionHandler.class
+com\loquendodev\carhub\config\RabbitMQConfig.class
+com\loquendodev\carhub\repository\UsuarioRepository.class
+com\loquendodev\carhub\models\dto\BindingRequestDto.class
+com\loquendodev\carhub\CarhubApplication.class
+com\loquendodev\carhub\config\SecurityConfig.class
+com\loquendodev\carhub\models\dto\QueueRequestDto.class
+com\loquendodev\carhub\controllers\usuarioController.class
+com\loquendodev\carhub\controllers\RabbitAdminController.class
+com\loquendodev\carhub\services\RabbitAdminService.class
+com\loquendodev\carhub\models\entity\Usuario.class

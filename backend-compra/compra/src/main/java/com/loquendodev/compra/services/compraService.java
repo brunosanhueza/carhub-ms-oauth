@@ -20,9 +20,11 @@ public class compraService {
 
 
 
-    /*toooda la configuracion del restTemplate */
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private com.loquendodev.compra.publisher.CompraEventPublisher compraEventPublisher;
                                         
     private final String URL_USUARIO    = "http://100.57.199.0:8066/api/v1/usuarios/";
     private final String URL_VEHICULO   = "http://100.57.199.0:8062/api/v2/vehiculos/";
@@ -67,7 +69,12 @@ public class compraService {
         compra.setDireccionAutomotriz(automotriz.getDireccionAutomotriz());
 
         // 3. Guarda en DB
-        return compraRepo.save(compra);
+        facturaModel facturaGuardada = compraRepo.save(compra);
+
+        // 4. Publica evento asíncrono para generación de ticket/documento
+        compraEventPublisher.publicarTicketCompra(facturaGuardada);
+
+        return facturaGuardada;
     }
 
     public List<facturaModel> obtenerCompras() {

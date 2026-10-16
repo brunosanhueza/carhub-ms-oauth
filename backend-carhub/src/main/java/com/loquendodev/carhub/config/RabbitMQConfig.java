@@ -28,14 +28,32 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public org.springframework.amqp.support.converter.MessageConverter jsonMessageConverter() {
+        return new org.springframework.amqp.support.converter.Jackson2JsonMessageConverter();
+    }
+
+    @Bean
+    public org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        org.springframework.amqp.rabbit.core.RabbitTemplate template = new org.springframework.amqp.rabbit.core.RabbitTemplate(connectionFactory);
+        template.setMessageConverter(jsonMessageConverter());
+        return template;
+    }
+
+    @Bean
     public ApplicationRunner initRabbitMQ(RabbitAdmin rabbitAdmin, Queue carhubQueue){
         return args -> {
-            rabbitAdmin.declareQueue(carhubQueue);
-            System.out.println("===================================");
-            System.out.println("EL RABIS EME QU ASIDO CONECTADO SUSECSFULI");
-            System.out.println("Cola creada: "+ CARHUB_QUEUE );
-            System.out.println("===================================");
+            try {
+                rabbitAdmin.declareQueue(carhubQueue);
+                System.out.println("===================================");
+                System.out.println("RabbitMQ Inicializado Correctamente en Carhub");
+                System.out.println("Cola base declarada: " + CARHUB_QUEUE);
+                System.out.println("===================================");
+            } catch (Exception e) {
+                System.err.println("==================================================================");
+                System.err.println("ADVERTENCIA: No se pudo conectar a RabbitMQ en localhost:5672 (" + e.getMessage() + ")");
+                System.err.println("Por favor asegúrate de levantar RabbitMQ antes de probar la mensajería.");
+                System.err.println("==================================================================");
+            }
         };
-    };
-    
+    }
 }

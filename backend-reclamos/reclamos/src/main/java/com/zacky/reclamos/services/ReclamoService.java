@@ -20,6 +20,9 @@ public class ReclamoService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private com.zacky.reclamos.publisher.ReclamoEventPublisher reclamoEventPublisher;
+
     private final String URL_USUARIO = "http://100.57.199.0:8066/api/v1/usuarios/";
 
     public ReclamoModel crearReclamo(Integer idUsuario, String tipoReclamo, String descripcionReclamo) {
@@ -37,7 +40,12 @@ public class ReclamoService {
         reclamo.setEmailUser(usuario.getEmailUser());
         reclamo.setPhoneUser(usuario.getPhoneUser());
 
-        return reclamoRepository.save(reclamo);
+        ReclamoModel reclamoGuardado = reclamoRepository.save(reclamo);
+
+        // Publicación asíncrona a RabbitMQ para generar ticket de soporte
+        reclamoEventPublisher.publicarTicketReclamo(reclamoGuardado);
+
+        return reclamoGuardado;
     }
 
     public List<ReclamoModel> obtenerReclamos() {
