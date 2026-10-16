@@ -1,0 +1,50 @@
+# ==========================================
+# Compilacion y empaquetado (Java / Maven)
+# ==========================================
+target/
+**/target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/wrapper/maven-wrapper.jar
+**/.mvn/wrapper/maven-wrapper.jar
+
+# ==========================================
+# Frontend (Node / Angular)
+# ==========================================
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.angular/
+**/.angular/
+
+# ==========================================
+# IDEs y Editores
+# ==========================================
+.vscode/
+**/.vscode/
+.idea/
+**/.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+.springBeans
+.sts4-cache
+
+# ==========================================
+# Logs y Archivos temporales
+# ==========================================
+*.log
+logs/
+**/logs/
+Thumbs.db
+.DS_Store

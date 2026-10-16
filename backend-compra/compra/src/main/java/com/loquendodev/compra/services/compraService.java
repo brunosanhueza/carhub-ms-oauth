@@ -25,10 +25,15 @@ public class compraService {
 
     @Autowired
     private com.loquendodev.compra.publisher.CompraEventPublisher compraEventPublisher;
-                                        
-    private final String URL_USUARIO    = "http://100.57.199.0:8066/api/v1/usuarios/";
-    private final String URL_VEHICULO   = "http://100.57.199.0:8062/api/v2/vehiculos/";
-    private final String URL_AUTOMOTRIZ = "http://100.57.199.0:8061/api/v3/automotriz/";
+
+    @org.springframework.beans.factory.annotation.Value("${services.usuario.url:http://localhost:8066/api/v1/usuarios/}")
+    private String URL_USUARIO;
+
+    @org.springframework.beans.factory.annotation.Value("${services.vehiculo.url:http://localhost:8062/api/v2/vehiculos/}")
+    private String URL_VEHICULO;
+
+    @org.springframework.beans.factory.annotation.Value("${services.automotriz.url:http://localhost:8061/api/v3/automotriz/}")
+    private String URL_AUTOMOTRIZ;
 
     public facturaModel emitirCompra(Integer idUsuario, Integer idVehiculo,
                                    Integer idAutomotriz, String metodoPago) {

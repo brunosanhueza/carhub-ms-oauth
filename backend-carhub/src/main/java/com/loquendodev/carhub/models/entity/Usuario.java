@@ -2,12 +2,10 @@ package com.loquendodev.carhub.models.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 @Entity
 public class Usuario {
 
@@ -79,5 +77,29 @@ public class Usuario {
 
     public void setRolUsuario(RolUsuario rolUsuario) {
         this.rolUsuario = rolUsuario;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Usuario usuario = (Usuario) o;
+        return idUser != null && idUser.equals(usuario.idUser);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Usuario{" +
+                "idUser=" + idUser +
+                ", nameUser='" + nameUser + '\'' +
+                ", emailUser='" + emailUser + '\'' +
+                ", phoneUser='" + phoneUser + '\'' +
+                ", rolUsuario=" + rolUsuario +
+                '}';
     }
 }

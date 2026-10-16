@@ -20,16 +20,21 @@ public class UsuarioService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired(required = false)
+    private com.loquendodev.carhub.publisher.UsuarioEventPublisher usuarioEventPublisher;
 
 //metodo para obtener a todos los clientes 
-
 public List<Usuario> obtenerUsuarios(){ 
-return usuarioRepository.findAll(); 
+    return usuarioRepository.findAll(); 
 }
 
 //metodo para guardar a un cliente 
 public Usuario guardarUsuario(Usuario usr){ 
-return usuarioRepository.save(usr); 
+    Usuario usuarioGuardado = usuarioRepository.save(usr); 
+    if (usuarioEventPublisher != null) {
+        usuarioEventPublisher.publicarEventoUsuario(usuarioGuardado, "REGISTRO", "Usuario registrado en Carhub");
+    }
+    return usuarioGuardado;
 } 
 //metodo para encontrar a un cliente mediante su id 
 public Optional<Usuario> obtenerUsuarioPorId(Integer id){ 
@@ -109,8 +114,11 @@ public Usuario syncUsuarioOAuth(Usuario usr) {
         if (usr.getRolUsuario() == null) {
             usr.setRolUsuario(com.loquendodev.carhub.models.entity.RolUsuario.USUARIO);
         }
-        return usuarioRepository.save(usr);
+            Usuario usuarioGuardado = usuarioRepository.save(usr);
+            if (usuarioEventPublisher != null) {
+                usuarioEventPublisher.publicarEventoUsuario(usuarioGuardado, "OAUTH_SYNC", "Usuario sincronizado mediante Microsoft Entra ID");
+            }
+            return usuarioGuardado;
+        }
     }
-}
-
 }

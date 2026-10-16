@@ -6,14 +6,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 @Entity
-
 public class VehiculoModel {
 
     @Id
@@ -42,4 +41,95 @@ public class VehiculoModel {
     @Column(name = "Precio_vehiculo", nullable = true)
     private Float precioVehiculo;
 
+    // Getters y Setters explícitos para evitar fallos de bytecode (Code length 0) en Java 21 / VS Code
+    public Integer getIdVehiculo() {
+        return idVehiculo;
+    }
+
+    public void setIdVehiculo(Integer idVehiculo) {
+        this.idVehiculo = idVehiculo;
+    }
+
+    public String getMarcaVehiculo() {
+        return marcaVehiculo;
+    }
+
+    public void setMarcaVehiculo(String marcaVehiculo) {
+        this.marcaVehiculo = marcaVehiculo;
+    }
+
+    public String getModeloVehiculo() {
+        return modeloVehiculo;
+    }
+
+    public void setModeloVehiculo(String modeloVehiculo) {
+        this.modeloVehiculo = modeloVehiculo;
+    }
+
+    public String getAnioVehiculo() {
+        return anioVehiculo;
+    }
+
+    public void setAnioVehiculo(String anioVehiculo) {
+        this.anioVehiculo = anioVehiculo;
+    }
+
+    public String getTipoBencinaVehiculo() {
+        return tipoBencinaVehiculo;
+    }
+
+    public void setTipoBencinaVehiculo(String tipoBencinaVehiculo) {
+        this.tipoBencinaVehiculo = tipoBencinaVehiculo;
+    }
+
+    public String getTipoTransmisionVehiculo() {
+        return tipoTransmisionVehiculo;
+    }
+
+    public void setTipoTransmisionVehiculo(String tipoTransmisionVehiculo) {
+        this.tipoTransmisionVehiculo = tipoTransmisionVehiculo;
+    }
+
+    public String getTipoPropulsionVehiculo() {
+        return tipoPropulsionVehiculo;
+    }
+
+    public void setTipoPropulsionVehiculo(String tipoPropulsionVehiculo) {
+        this.tipoPropulsionVehiculo = tipoPropulsionVehiculo;
+    }
+
+    public Float getPrecioVehiculo() {
+        return precioVehiculo;
+    }
+
+    public void setPrecioVehiculo(Float precioVehiculo) {
+        this.precioVehiculo = precioVehiculo;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VehiculoModel that = (VehiculoModel) o;
+        return Objects.equals(idVehiculo, that.idVehiculo);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "VehiculoModel{" +
+                "idVehiculo=" + idVehiculo +
+                ", marcaVehiculo='" + marcaVehiculo + '\'' +
+                ", modeloVehiculo='" + modeloVehiculo + '\'' +
+                ", anioVehiculo='" + anioVehiculo + '\'' +
+                ", tipoBencinaVehiculo='" + tipoBencinaVehiculo + '\'' +
+                ", tipoTransmisionVehiculo='" + tipoTransmisionVehiculo + '\'' +
+                ", tipoPropulsionVehiculo='" + tipoPropulsionVehiculo + '\'' +
+                ", precioVehiculo=" + precioVehiculo +
+                '}';
+    }
 }

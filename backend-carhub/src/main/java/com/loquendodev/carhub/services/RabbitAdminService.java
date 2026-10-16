@@ -77,6 +77,14 @@ public class RabbitAdminService {
     }
 
     /**
+     * Obtiene estadísticas e información de una cola existente.
+     */
+    public java.util.Properties obtenerInformacionCola(String nombreCola) {
+        log.info("Consultando propiedades de la cola '{}'", nombreCola);
+        return rabbitAdmin.getQueueProperties(nombreCola);
+    }
+
+    /**
      * Declara un nuevo Exchange en RabbitMQ.
      */
     public void crearExchange(ExchangeRequestDto dto) {

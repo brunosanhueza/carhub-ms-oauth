@@ -2,10 +2,10 @@ package com.zacky.piezas.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
+import java.util.Objects;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -61,4 +61,147 @@ public class PiezaModel {
 
     @Column(name = "Telefono_usuario", nullable = false)
     private String phoneUser;
+
+    public Integer getIdPieza() {
+        return idPieza;
+    }
+
+    public void setIdPieza(Integer idPieza) {
+        this.idPieza = idPieza;
+    }
+
+    public String getTipoPieza() {
+        return tipoPieza;
+    }
+
+    public void setTipoPieza(String tipoPieza) {
+        this.tipoPieza = tipoPieza;
+    }
+
+    public String getNombrePieza() {
+        return nombrePieza;
+    }
+
+    public void setNombrePieza(String nombrePieza) {
+        this.nombrePieza = nombrePieza;
+    }
+
+    public String getMaterialPieza() {
+        return materialPieza;
+    }
+
+    public void setMaterialPieza(String materialPieza) {
+        this.materialPieza = materialPieza;
+    }
+
+    public Float getPrecioPieza() {
+        return precioPieza;
+    }
+
+    public void setPrecioPieza(Float precioPieza) {
+        this.precioPieza = precioPieza;
+    }
+
+    public String getTipoMarcaPieza() {
+        return tipoMarcaPieza;
+    }
+
+    public void setTipoMarcaPieza(String tipoMarcaPieza) {
+        this.tipoMarcaPieza = tipoMarcaPieza;
+    }
+
+    public Integer getStockPieza() {
+        return stockPieza;
+    }
+
+    public void setStockPieza(Integer stockPieza) {
+        this.stockPieza = stockPieza;
+    }
+
+    public String getDescripcionPieza() {
+        return descripcionPieza;
+    }
+
+    public void setDescripcionPieza(String descripcionPieza) {
+        this.descripcionPieza = descripcionPieza;
+    }
+
+    public Integer getIdVehiculo() {
+        return idVehiculo;
+    }
+
+    public void setIdVehiculo(Integer idVehiculo) {
+        this.idVehiculo = idVehiculo;
+    }
+
+    public String getMarcaVehiculo() {
+        return marcaVehiculo;
+    }
+
+    public void setMarcaVehiculo(String marcaVehiculo) {
+        this.marcaVehiculo = marcaVehiculo;
+    }
+
+    public String getModeloVehiculo() {
+        return modeloVehiculo;
+    }
+
+    public void setModeloVehiculo(String modeloVehiculo) {
+        this.modeloVehiculo = modeloVehiculo;
+    }
+
+    public Integer getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(Integer idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
+    public String getNameUser() {
+        return nameUser;
+    }
+
+    public void setNameUser(String nameUser) {
+        this.nameUser = nameUser;
+    }
+
+    public String getEmailUser() {
+        return emailUser;
+    }
+
+    public void setEmailUser(String emailUser) {
+        this.emailUser = emailUser;
+    }
+
+    public String getPhoneUser() {
+        return phoneUser;
+    }
+
+    public void setPhoneUser(String phoneUser) {
+        this.phoneUser = phoneUser;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PiezaModel that = (PiezaModel) o;
+        return Objects.equals(idPieza, that.idPieza);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "PiezaModel{" +
+                "idPieza=" + idPieza +
+                ", nombrePieza='" + nombrePieza + '\'' +
+                ", tipoPieza='" + tipoPieza + '\'' +
+                ", precioPieza=" + precioPieza +
+                '}';
+    }
 }

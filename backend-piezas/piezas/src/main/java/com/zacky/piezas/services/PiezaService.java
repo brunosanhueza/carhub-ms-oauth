@@ -20,8 +20,11 @@ public class PiezaService {
     @Autowired
     private RestTemplate restTemplate;
 
-    private final String URL_VEHICULO = "http://100.57.199.0:8062/api/v2/vehiculos/";
-    private final String URL_USUARIO  = "http://100.57.199.0:8066/api/v1/usuarios/";
+    @org.springframework.beans.factory.annotation.Value("${services.vehiculo.url:http://localhost:8062/api/v2/vehiculos/}")
+    private String URL_VEHICULO;
+
+    @org.springframework.beans.factory.annotation.Value("${services.usuario.url:http://localhost:8066/api/v1/usuarios/}")
+    private String URL_USUARIO;
 
     public PiezaModel registrarPieza(Integer idVehiculo, Integer idUsuario,
                                      String tipoPieza, String nombrePieza,

@@ -23,7 +23,8 @@ public class ReclamoService {
     @Autowired
     private com.zacky.reclamos.publisher.ReclamoEventPublisher reclamoEventPublisher;
 
-    private final String URL_USUARIO = "http://100.57.199.0:8066/api/v1/usuarios/";
+    @org.springframework.beans.factory.annotation.Value("${services.usuario.url:http://localhost:8066/api/v1/usuarios/}")
+    private String URL_USUARIO;
 
     public ReclamoModel crearReclamo(Integer idUsuario, String tipoReclamo, String descripcionReclamo) {
 
