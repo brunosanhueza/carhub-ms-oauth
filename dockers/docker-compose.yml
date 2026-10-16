@@ -16,6 +16,11 @@ services:
       - mysql_data:/var/lib/mysql
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pzacky5023"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - carhub-infra-net
 
@@ -34,6 +39,11 @@ services:
     ports:
       - "5672:5672"     # AMQP Broker
       - "15672:15672"   # Management UI
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - rabbitmq1_data:/var/lib/rabbitmq
     networks:
@@ -58,6 +68,172 @@ services:
       - rabbitmq1
     volumes:
       - rabbitmq2_data:/var/lib/rabbitmq
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
+  # MICROSERVICIO AUTOMOTRIZ (Puerto 8061)
+  # ==========================================
+  automotriz:
+    build:
+      context: ../backend-automotriz/automotriz
+      dockerfile: Dockerfile
+    image: carhub-automotriz:latest
+    container_name: backend-automotriz
+    restart: always
+    ports:
+      - "8061:8061"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/automotriz
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=zacky5023
+      - SPRING_RABBITMQ_HOST=rabbitmq1
+      - SPRING_RABBITMQ_PORT=5672
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq1:
+        condition: service_healthy
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
+  # MICROSERVICIO VEHICULOS (Puerto 8062)
+  # ==========================================
+  vehiculos:
+    build:
+      context: ../backend-carhub-vehiculo/vehiculos
+      dockerfile: Dockerfile
+    image: carhub-vehiculos:latest
+    container_name: backend-vehiculos
+    restart: always
+    ports:
+      - "8062:8062"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/vehiculos
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=zacky5023
+      - SPRING_RABBITMQ_HOST=rabbitmq1
+      - SPRING_RABBITMQ_PORT=5672
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq1:
+        condition: service_healthy
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
+  # MICROSERVICIO PIEZAS (Puerto 8063)
+  # ==========================================
+  piezas:
+    build:
+      context: ../backend-piezas/piezas
+      dockerfile: Dockerfile
+    image: carhub-piezas:latest
+    container_name: backend-piezas
+    restart: always
+    ports:
+      - "8063:8063"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/piezas
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=zacky5023
+      - SPRING_RABBITMQ_HOST=rabbitmq1
+      - SPRING_RABBITMQ_PORT=5672
+      - SERVICES_VEHICULOS_URL=http://vehiculos:8062/api/v1/vehiculos/
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq1:
+        condition: service_healthy
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
+  # MICROSERVICIO RECLAMOS (Puerto 8064)
+  # ==========================================
+  reclamos:
+    build:
+      context: ../backend-reclamos/reclamos
+      dockerfile: Dockerfile
+    image: carhub-reclamos:latest
+    container_name: backend-reclamos
+    restart: always
+    ports:
+      - "8064:8064"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/reclamos
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=zacky5023
+      - SPRING_RABBITMQ_HOST=rabbitmq1
+      - SPRING_RABBITMQ_PORT=5672
+      - SERVICES_USUARIO_URL=http://carhub:8066/api/v1/usuarios/
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq1:
+        condition: service_healthy
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
+  # MICROSERVICIO COMPRA (Puerto 8065)
+  # ==========================================
+  compra:
+    build:
+      context: ../backend-compra/compra
+      dockerfile: Dockerfile
+    image: carhub-compra:latest
+    container_name: backend-compra
+    restart: always
+    ports:
+      - "8065:8065"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/compra
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=zacky5023
+      - SPRING_RABBITMQ_HOST=rabbitmq1
+      - SPRING_RABBITMQ_PORT=5672
+      - SERVICES_USUARIO_URL=http://carhub:8066/api/v1/usuarios/
+      - SERVICES_VEHICULOS_URL=http://vehiculos:8062/api/v1/vehiculos/
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq1:
+        condition: service_healthy
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
+  # MICROSERVICIO CARHUB / USUARIOS (Puerto 8066)
+  # ==========================================
+  carhub:
+    build:
+      context: ../backend-carhub
+      dockerfile: Dockerfile
+    image: carhub-usuarios:latest
+    container_name: backend-carhub
+    restart: always
+    ports:
+      - "8066:8066"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/usuarios
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=zacky5023
+      - SPRING_RABBITMQ_HOST=rabbitmq1
+      - SPRING_RABBITMQ_PORT=5672
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq1:
+        condition: service_healthy
     networks:
       - carhub-infra-net
 

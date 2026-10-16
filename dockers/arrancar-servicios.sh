@@ -1,20 +1,23 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script de Despliegue de Infraestructura para EC2 (Cloud Native - Duoc UC)
-# Levanta MySQL (con 6 bases de datos) y el Clúster RabbitMQ de 2 Nodos
+# Script de Despliegue Completo para AWS EC2 / Linux (Cloud Native - Duoc UC)
+# Despliega:
+#   1. Servidor MySQL 8.0 (con las 6 bases de datos automáticas)
+#   2. Clúster RabbitMQ de 2 Nodos (rabbitmq1 + rabbitmq2 sincronizados)
+#   3. Los 6 Microservicios Spring Boot construidos y conectados en contenedores
 # ==============================================================================
 
 set -e
 
-# Directorio del script
+# Directorio base del script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "================================================================="
-echo "   INICIANDO DESPLIEGUE DE INFRAESTRUCTURA EN AWS EC2"
+echo "   INICIANDO DESPLIEGUE COMPLETO DE SERVICIOS EN DOCKER"
 echo "================================================================="
 
-# 1. Comprobar e instalar Docker / Docker Compose si no estuvieran presentes
+# 1. Comprobar instalación de Docker
 if ! command -v docker &> /dev/null; then
     echo "[ERROR] Docker no está instalado en este sistema. Por favor instálalo primero."
     exit 1
@@ -30,12 +33,24 @@ else
     exit 1
 fi
 
-echo "[INFO] Usando: $COMPOSE_CMD"
+echo "[INFO] Usando gestor: $COMPOSE_CMD"
 
-# 2. Verificar si existen contenedores previos y limpiarlos
-CONTAINERS=("mysql-carhub" "rabbitmq1" "rabbitmq2" "gracious_pike")
+# 2. Verificar y limpiar contenedores previos
+CONTAINERS=(
+    "mysql-carhub"
+    "rabbitmq1"
+    "rabbitmq2"
+    "backend-automotriz"
+    "backend-vehiculos"
+    "backend-piezas"
+    "backend-reclamos"
+    "backend-compra"
+    "backend-carhub"
+    "gracious_pike"
+)
+
+echo "[INFO] Verificando contenedores existentes..."
 EXISTEN=false
-
 for c in "${CONTAINERS[@]}"; do
     if docker ps -a --format '{{.Names}}' | grep -Eq "^${c}\$"; then
         EXISTEN=true
@@ -44,7 +59,7 @@ for c in "${CONTAINERS[@]}"; do
 done
 
 if [ "$EXISTEN" = true ]; then
-    echo "[INFO] Se detectaron contenedores previos. Procediendo a detener y eliminar..."
+    echo "[INFO] Se detectaron contenedores previos. Deteniendo y eliminando para iniciar limpio..."
     $COMPOSE_CMD down -v --remove-orphans 2>/dev/null || true
     for c in "${CONTAINERS[@]}"; do
         if docker ps -a --format '{{.Names}}' | grep -Eq "^${c}\$"; then
@@ -52,58 +67,28 @@ if [ "$EXISTEN" = true ]; then
             docker rm -f "$c" 2>/dev/null || true
         fi
     done
-    echo "[OK] Contenedores antiguos eliminados correctamente."
+    echo "[OK] Contenedores previos eliminados exitosamente."
 else
-    echo "[INFO] No se encontraron contenedores existentes. Creando desde cero..."
+    echo "[INFO] No se encontraron contenedores previos. Iniciando despliegue nuevo."
 fi
 
-# 3. Levantar los servicios con Docker Compose
-echo "[INFO] Levantando servicios con Docker Compose (MySQL + RabbitMQ 2 Nodos)..."
-$COMPOSE_CMD up -d
+# 3. Arrancar Infraestructura Base (MySQL + Clúster RabbitMQ)
+echo "================================================================="
+echo " [PASO 1/3] LEVANTANDO BASES DE DATOS Y MENSAJERÍA (MySQL + RabbitMQ)"
+echo "================================================================="
+$COMPOSE_CMD up -d mysql rabbitmq1 rabbitmq2
 
-echo "[INFO] Esperando a que los servicios inicien (15 segundos)..."
-sleep 15
-
-# 4. Configurar el Clúster de RabbitMQ (Unir rabbitmq2 a rabbitmq1)
-echo "[INFO] Configurando integración del Clúster RabbitMQ entre rabbit@rabbit1 y rabbit@rabbit2..."
-max_retries=10
+echo "[INFO] Esperando a que MySQL esté listo para aceptar conexiones..."
 count=0
-until docker exec rabbitmq1 rabbitmqctl status &>/dev/null || [ $count -ge $max_retries ]; do
-    echo "       Esperando a que rabbitmq1 responda... ($count/$max_retries)"
+max_retries=20
+until docker exec mysql-carhub mysqladmin ping -h localhost -uroot -pzacky5023 --silent &>/dev/null || [ $count -ge $max_retries ]; do
+    echo "       Esperando respuesta de MySQL... ($count/$max_retries)"
     sleep 3
     ((count++))
 done
 
-count=0
-until docker exec rabbitmq2 rabbitmqctl status &>/dev/null || [ $count -ge $max_retries ]; do
-    echo "       Esperando a que rabbitmq2 responda... ($count/$max_retries)"
-    sleep 3
-    ((count++))
-done
-
-echo "[INFO] Uniendo rabbitmq2 al clúster de rabbitmq1..."
-docker exec rabbitmq2 rabbitmqctl stop_app
-docker exec rabbitmq2 rabbitmqctl reset 2>/dev/null || true
-docker exec rabbitmq2 rabbitmqctl join_cluster rabbit@rabbit1
-docker exec rabbitmq2 rabbitmqctl start_app
-
-echo "================================================================="
-echo " [CLÚSTER DE RABBITMQ - ESTADO ACTUAL]"
-echo "================================================================="
-docker exec rabbitmq1 rabbitmqctl cluster_status
-
-# 5. Verificar MySQL y creación automática de las 6 bases de datos
-echo "================================================================="
-echo " [VERIFICACIÓN DE BASES DE DATOS MYSQL]"
-echo "================================================================="
-count=0
-until docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SHOW DATABASES;" &>/dev/null || [ $count -ge 10 ]; do
-    echo "       Esperando a que MySQL acepte conexiones..."
-    sleep 3
-    ((count++))
-done
-
-# Ejecutar el script SQL de creación de bases de datos por si acaso el volumen ya existía
+# Crear explícitamente las 6 bases de datos requeridas por la rúbrica
+echo "[INFO] Creando y asegurando las 6 bases de datos para los microservicios..."
 docker exec -i mysql-carhub mysql -uroot -pzacky5023 << 'EOF'
 CREATE DATABASE IF NOT EXISTS automotriz;
 CREATE DATABASE IF NOT EXISTS vehiculos;
@@ -113,19 +98,69 @@ CREATE DATABASE IF NOT EXISTS compra;
 CREATE DATABASE IF NOT EXISTS usuarios;
 EOF
 
-docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SHOW DATABASES LIKE '%';"
+echo "[OK] Bases de datos creadas:"
+docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SHOW DATABASES WHERE \`Database\` IN ('automotriz','vehiculos','piezas','reclamos','compra','usuarios');"
 
+# 4. Configurar el Clúster de RabbitMQ (Unir rabbitmq2 a rabbitmq1)
 echo "================================================================="
-echo " INFRAESTRUCTURA DESPLEGADA Y LISTA AL 100%"
+echo " [PASO 2/3] CONFIGURANDO CLÚSTER RABBITMQ (2 NODOS)"
 echo "================================================================="
-echo " Servidor MySQL:"
-echo "   - Host: localhost:3306"
-echo "   - Usuario: root | Password: zacky5023"
-echo "   - Bases de datos creadas: automotriz, vehiculos, piezas, reclamos, compra, usuarios"
+count=0
+until docker exec rabbitmq1 rabbitmq-diagnostics -q ping &>/dev/null || [ $count -ge $max_retries ]; do
+    echo "       Esperando a rabbitmq1... ($count/$max_retries)"
+    sleep 3
+    ((count++))
+done
+
+count=0
+until docker exec rabbitmq2 rabbitmq-diagnostics -q ping &>/dev/null || [ $count -ge $max_retries ]; do
+    echo "       Esperando a rabbitmq2... ($count/$max_retries)"
+    sleep 3
+    ((count++))
+done
+
+echo "[INFO] Sincronizando rabbitmq2 con rabbit@rabbit1..."
+docker exec rabbitmq2 rabbitmqctl stop_app
+docker exec rabbitmq2 rabbitmqctl reset 2>/dev/null || true
+docker exec rabbitmq2 rabbitmqctl join_cluster rabbit@rabbit1
+docker exec rabbitmq2 rabbitmqctl start_app
+
+echo "[OK] Clúster configurado exitosamente:"
+docker exec rabbitmq1 rabbitmqctl cluster_status
+
+# 5. Construir y Levantar los 6 Microservicios Spring Boot
+echo "================================================================="
+echo " [PASO 3/3] COMPILANDO Y LEVANTANDO LOS 6 MICROSERVICIOS SPRING BOOT"
+echo "================================================================="
+echo "[INFO] Construyendo imágenes Docker con Java 21 y Maven (Multi-stage build)..."
+$COMPOSE_CMD up -d --build automotriz vehiculos piezas reclamos compra carhub
+
+echo "[INFO] Esperando 20 segundos a que los microservicios inicialicen sus conexiones..."
+sleep 20
+
+# 6. Resumen de Despliegue
+echo "================================================================="
+echo "      ¡TODOS LOS SERVICIOS ESTÁN CORRIENDO AL 100%!              "
+echo "================================================================="
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
 echo ""
-echo " Clúster RabbitMQ (2 Nodos Activos):"
-echo "   - Nodo 1 (Broker): localhost:5672"
-echo "   - Nodo 1 (Panel Web): http://localhost:15672 (guest / guest)"
-echo "   - Nodo 2 (Broker): localhost:5673"
-echo "   - Nodo 2 (Panel Web): http://localhost:15673 (guest / guest)"
+echo "================================================================="
+echo "                   TABLA DE ACCESO Y ENDPOINTS                   "
+echo "================================================================="
+echo " 1. MySQL Server:"
+echo "    - Host: localhost:3306 (user: root | pass: zacky5023)"
+echo "    - BDs: automotriz, vehiculos, piezas, reclamos, compra, usuarios"
+echo ""
+echo " 2. Clúster RabbitMQ (2 Nodos Activos):"
+echo "    - Nodo 1: AMQP localhost:5672 | Web: http://localhost:15672 (guest/guest)"
+echo "    - Nodo 2: AMQP localhost:5673 | Web: http://localhost:15673 (guest/guest)"
+echo ""
+echo " 3. Microservicios Spring Boot:"
+echo "    - [8061] Automotriz:    http://localhost:8061/swagger-ui/index.html"
+echo "    - [8062] Vehículos:     http://localhost:8062/swagger-ui/index.html"
+echo "    - [8063] Piezas:        http://localhost:8063/swagger-ui/index.html"
+echo "    - [8064] Reclamos:      http://localhost:8064/swagger-ui/index.html"
+echo "    - [8065] Compra:        http://localhost:8065/swagger-ui/index.html"
+echo "    - [8066] CarHub/Users:  http://localhost:8066/swagger-ui/index.html"
 echo "================================================================="

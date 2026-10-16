@@ -1,5 +1,14 @@
-FROM eclipse-temurin:21-jdk-jammy
-WORKDIR /Microservicio-automotriz
-COPY *.jar app.jar
+# Etapa 1: Compilacion con Maven y Java 21
+FROM maven:3.9.6-eclipse-temurin-21-jammy AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# Etapa 2: Imagen de ejecucion ligera con JRE 21
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+ENV JAVA_TOOL_OPTIONS="-Xms128m -Xmx256m"
 EXPOSE 8061
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
