@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script de Despliegue Completo para AWS EC2 / Linux (Cloud Native - Duoc UC)
+# Script de Despliegue Completo para AWS EC2 / Linux / Windows Git Bash
 # Despliega:
 #   1. Servidor MySQL 8.0 (con las 6 bases de datos automáticas)
 #   2. Clúster RabbitMQ de 2 Nodos (rabbitmq1 + rabbitmq2 sincronizados)
@@ -72,24 +72,34 @@ else
     echo "[INFO] No se encontraron contenedores previos. Iniciando despliegue nuevo."
 fi
 
+# Comprobar si el puerto 3306 ya está ocupado en el host (ej. MySQL local de Windows)
+if (command -v netstat &>/dev/null && netstat -ano 2>/dev/null | grep -Eq "(:3306 |0.0.0.0:3306|127.0.0.1:3306).*LISTENING") || \
+   (command -v ss &>/dev/null && ss -tlpn 2>/dev/null | grep -q ":3306 "); then
+    echo "[AVISO] El puerto 3306 ya está ocupado en el sistema host por un MySQL local."
+    echo "        Mapeando el puerto externo del contenedor al 3307 en el host (en la red interna sigue en 3306)..."
+    export MYSQL_PORT=3307
+else
+    export MYSQL_PORT=3306
+fi
+
 # 3. Arrancar Infraestructura Base (MySQL + Clúster RabbitMQ)
 echo "================================================================="
 echo " [PASO 1/3] LEVANTANDO BASES DE DATOS Y MENSAJERÍA (MySQL + RabbitMQ)"
 echo "================================================================="
 $COMPOSE_CMD up -d mysql rabbitmq1 rabbitmq2
 
-echo "[INFO] Esperando a que MySQL esté listo para aceptar conexiones..."
+echo "[INFO] Esperando a que MySQL acepte consultas SQL con credenciales root..."
 count=0
-max_retries=20
-until docker exec mysql-carhub mysqladmin ping -h localhost -uroot -pzacky5023 --silent &>/dev/null || [ $count -ge $max_retries ]; do
+max_retries=30
+until docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SELECT 1;" &>/dev/null || [ $count -ge $max_retries ]; do
     echo "       Esperando respuesta de MySQL... ($count/$max_retries)"
     sleep 3
-    ((count++))
+    count=$((count + 1))
 done
 
 # Crear explícitamente las 6 bases de datos requeridas por la rúbrica
 echo "[INFO] Creando y asegurando las 6 bases de datos para los microservicios..."
-docker exec -i mysql-carhub mysql -uroot -pzacky5023 << 'EOF'
+docker exec -i mysql-carhub mysql -uroot -pzacky5023 << 'EOF' || true
 CREATE DATABASE IF NOT EXISTS automotriz;
 CREATE DATABASE IF NOT EXISTS vehiculos;
 CREATE DATABASE IF NOT EXISTS piezas;
@@ -106,17 +116,17 @@ echo "================================================================="
 echo " [PASO 2/3] CONFIGURANDO CLÚSTER RABBITMQ (2 NODOS)"
 echo "================================================================="
 count=0
-until docker exec rabbitmq1 rabbitmq-diagnostics -q ping &>/dev/null || [ $count -ge $max_retries ]; do
+until docker exec rabbitmq1 rabbitmqctl status &>/dev/null || [ $count -ge $max_retries ]; do
     echo "       Esperando a rabbitmq1... ($count/$max_retries)"
     sleep 3
-    ((count++))
+    count=$((count + 1))
 done
 
 count=0
-until docker exec rabbitmq2 rabbitmq-diagnostics -q ping &>/dev/null || [ $count -ge $max_retries ]; do
+until docker exec rabbitmq2 rabbitmqctl status &>/dev/null || [ $count -ge $max_retries ]; do
     echo "       Esperando a rabbitmq2... ($count/$max_retries)"
     sleep 3
-    ((count++))
+    count=$((count + 1))
 done
 
 echo "[INFO] Sincronizando rabbitmq2 con rabbit@rabbit1..."
@@ -132,11 +142,19 @@ docker exec rabbitmq1 rabbitmqctl cluster_status
 echo "================================================================="
 echo " [PASO 3/3] COMPILANDO Y LEVANTANDO LOS 6 MICROSERVICIOS SPRING BOOT"
 echo "================================================================="
-echo "[INFO] Construyendo imágenes Docker con Java 21 y Maven (Multi-stage build)..."
-$COMPOSE_CMD up -d --build automotriz vehiculos piezas reclamos compra carhub
+SERVICES=("automotriz" "vehiculos" "piezas" "reclamos" "compra" "carhub")
 
-echo "[INFO] Esperando 20 segundos a que los microservicios inicialicen sus conexiones..."
-sleep 20
+echo "[INFO] Compilando imágenes Docker (control de memoria RAM optimizado para EC2)..."
+for svc in "${SERVICES[@]}"; do
+    echo "       -> Construyendo imagen para: $svc..."
+    $COMPOSE_CMD build "$svc"
+done
+
+echo "[INFO] Levantando todos los microservicios en segundo plano..."
+$COMPOSE_CMD up -d "${SERVICES[@]}"
+
+echo "[INFO] Esperando 15 segundos a que los microservicios inicialicen sus conexiones..."
+sleep 15
 
 # 6. Resumen de Despliegue
 echo "================================================================="
@@ -148,8 +166,8 @@ echo ""
 echo "================================================================="
 echo "                   TABLA DE ACCESO Y ENDPOINTS                   "
 echo "================================================================="
-echo " 1. MySQL Server:"
-echo "    - Host: localhost:3306 (user: root | pass: zacky5023)"
+echo " 1. MySQL Server (Container):"
+echo "    - Host (externo): localhost:$MYSQL_PORT (user: root | pass: zacky5023)"
 echo "    - BDs: automotriz, vehiculos, piezas, reclamos, compra, usuarios"
 echo ""
 echo " 2. Clúster RabbitMQ (2 Nodos Activos):"

@@ -28,12 +28,26 @@ foreach ($c in $containers) {
     }
 }
 
+# Comprobar si el puerto 3306 ya está ocupado en Windows
+$portInUse = Get-NetTCPConnection -LocalPort 3306 -State Listen -ErrorAction SilentlyContinue
+if ($portInUse) {
+    Write-Host "[AVISO] Puerto 3306 ocupado por un servicio local (MySQL Windows). Mapeando MySQL contenedor a 3307..." -ForegroundColor Yellow
+    $env:MYSQL_PORT = "3307"
+} else {
+    $env:MYSQL_PORT = "3306"
+}
+
 # 2. Levantar MySQL y RabbitMQ primero
 Write-Host "[INFO] Levantando MySQL y RabbitMQ..." -ForegroundColor Green
 docker compose up -d mysql rabbitmq1 rabbitmq2
 
-Write-Host "[INFO] Esperando 12 segundos a que inicialicen los contenedores..." -ForegroundColor Gray
-Start-Sleep -Seconds 12
+Write-Host "[INFO] Esperando a que MySQL responda..." -ForegroundColor Gray
+$count = 0
+do {
+    Start-Sleep -Seconds 3
+    $count++
+    $check = docker exec mysql-carhub mysqladmin ping -h localhost -uroot -pzacky5023 --silent 2>$null
+} while ($LASTEXITCODE -ne 0 -and $count -lt 20)
 
 # 3. Crear las 6 bases de datos
 Write-Host "[INFO] Verificando y creando las 6 bases de datos..." -ForegroundColor Green
@@ -56,7 +70,7 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 Write-Host "=================================================================" -ForegroundColor Green
 Write-Host " SERVICIOS LISTOS:" -ForegroundColor Green
-Write-Host " - MySQL (3306) con 6 BDs creadas" -ForegroundColor Green
+Write-Host " - MySQL (Host: $env:MYSQL_PORT | Red interna: 3306) con 6 BDs creadas" -ForegroundColor Green
 Write-Host " - RabbitMQ Clúster (5672 / 15672)" -ForegroundColor Green
 Write-Host " - Automotriz:    http://localhost:8061/swagger-ui/index.html" -ForegroundColor Green
 Write-Host " - Vehículos:     http://localhost:8062/swagger-ui/index.html" -ForegroundColor Green
