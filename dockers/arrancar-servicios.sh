@@ -128,6 +128,13 @@ EOF
 echo "[OK] Bases de datos creadas:"
 docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SHOW DATABASES WHERE \`Database\` IN ('automotriz','vehiculos','piezas','reclamos','compra','usuarios');"
 
+# Poblar datos iniciales automáticos (Marcas OEM, Preparadoras JDM, Vehículos y Piezas)
+if [ -f "$SCRIPT_DIR/init-data.sql" ]; then
+    echo "[INFO] Poblando datos iniciales JDM en automotriz, vehiculos y piezas..."
+    docker exec -i mysql-carhub mysql -uroot -pzacky5023 < "$SCRIPT_DIR/init-data.sql" || true
+    echo "[OK] Catálogo de concesionarias, preparadoras y vehículos semillado exitosamente."
+fi
+
 # Configurar el Clúster de RabbitMQ (Unir rabbitmq2 a rabbitmq1)
 echo "[INFO] Sincronizando Clúster RabbitMQ (2 Nodos)..."
 count=0
