@@ -1,14 +1,20 @@
 -- =====================================================================
 -- SCRIPT DE SEMILLADO DE DATOS (SEED DATA) PARA CARHUB
 -- Marcas Japonesas (OEM) + Preparadoras Legendarias (Tuning / Motorsport)
--- Se ejecuta DESPUÉS de que los microservicios hayan creado las tablas
--- via Hibernate ddl-auto=update
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 1. BASE DE DATOS: automotriz (Tabla: Automotriz - creada por Hibernate)
+-- 1. BASE DE DATOS: automotriz
+-- Tabla: Automotriz (y automotriz para compatibilidad de casing en Linux)
 -- ---------------------------------------------------------------------
+CREATE DATABASE IF NOT EXISTS automotriz;
 USE automotriz;
+
+CREATE TABLE IF NOT EXISTS Automotriz (
+    Id_Automotriz INT AUTO_INCREMENT PRIMARY KEY,
+    Nombre_automotriz VARCHAR(255) NOT NULL UNIQUE,
+    Direccion_automotriz VARCHAR(255) NOT NULL
+);
 
 INSERT INTO Automotriz (Id_Automotriz, Nombre_automotriz, Direccion_automotriz) VALUES
 (1, 'Honda', 'Minato, Tokio, Japón - Central Global Honda Motor Co.'),
@@ -29,11 +35,28 @@ ON DUPLICATE KEY UPDATE
     Nombre_automotriz=VALUES(Nombre_automotriz),
     Direccion_automotriz=VALUES(Direccion_automotriz);
 
+-- Crear tabla en minúsculas por si MySQL en Linux o Hibernate lo requiere
+CREATE TABLE IF NOT EXISTS automotriz LIKE Automotriz;
+INSERT INTO automotriz SELECT * FROM Automotriz ON DUPLICATE KEY UPDATE Nombre_automotriz=VALUES(Nombre_automotriz);
+
 
 -- ---------------------------------------------------------------------
--- 2. BASE DE DATOS: vehiculos (Tabla: vehiculo_model - creada por Hibernate)
+-- 2. BASE DE DATOS: vehiculos
+-- Tabla: vehiculo_model
 -- ---------------------------------------------------------------------
+CREATE DATABASE IF NOT EXISTS vehiculos;
 USE vehiculos;
+
+CREATE TABLE IF NOT EXISTS vehiculo_model (
+    ID_Vehiculo INT AUTO_INCREMENT PRIMARY KEY,
+    Marca_vehiculo VARCHAR(255) NOT NULL,
+    Modelo_vehiculo VARCHAR(255) NOT NULL,
+    Anio_vehiculo VARCHAR(255) NULL,
+    Tipo_combustible VARCHAR(255) NOT NULL,
+    Tipo_transmision VARCHAR(255) NOT NULL,
+    Tipo_propulsion VARCHAR(255) NOT NULL,
+    Precio_vehiculo FLOAT NULL
+);
 
 INSERT INTO vehiculo_model (ID_Vehiculo, Marca_vehiculo, Modelo_vehiculo, Anio_vehiculo, Tipo_combustible, Tipo_transmision, Tipo_propulsion, Precio_vehiculo) VALUES
 -- Honda OEM
@@ -58,7 +81,7 @@ INSERT INTO vehiculo_model (ID_Vehiculo, Marca_vehiculo, Modelo_vehiculo, Anio_v
 
 -- Nismo
 (13, 'Nismo', 'Skyline GT-R R34 Nismo Z-Tune', '2005', 'Bencina Racing 100', 'Manual 6 velocidades Reforzada', 'Integral (ATTESA E-TS Pro AWD)', 450000000),
-(14, 'Nismo', 'Nismo 400R (BCNR33)', '1997', 'Bencina 97', 'Manual 5 velocidades Heavy Duty', 'Integral (AWD)', 280000000),
+(14, 'Nismo', 'Nismo 400R (BCNR33)', '1997', 'Bencina 97', 'Manual 5 velocidades Heavy Duty', 'Integral (AWD)', 28000000),
 
 -- Toyota OEM
 (15, 'Toyota', 'Supra RZ Twin Turbo (JZA80)', '1998', 'Bencina 97', 'Manual 6 velocidades Getrag V160', 'Trasera (RWD)', 85000000),
@@ -105,36 +128,56 @@ ON DUPLICATE KEY UPDATE
 
 
 -- ---------------------------------------------------------------------
--- 3. BASE DE DATOS: piezas (Tabla: Pieza - creada por Hibernate)
+-- 3. BASE DE DATOS: piezas
+-- Tabla: Pieza
 -- ---------------------------------------------------------------------
+CREATE DATABASE IF NOT EXISTS piezas;
 USE piezas;
 
-INSERT INTO Pieza (ID_Pieza, Tipo_pieza, Nombre_pieza, Material_pieza, Precio_pieza, Tipo_marca_pieza, Stock_pieza, Descripcion_pieza, ID_Vehiculo, Marca_vehiculo, Modelo_vehiculo, ID_Usuario, Nombre_usuario, Correo_usuario) VALUES
+CREATE TABLE IF NOT EXISTS Pieza (
+    ID_Pieza INT AUTO_INCREMENT PRIMARY KEY,
+    Tipo_pieza VARCHAR(255) NOT NULL,
+    Nombre_pieza VARCHAR(255) NOT NULL,
+    Material_pieza VARCHAR(255) NOT NULL,
+    Precio_pieza FLOAT NOT NULL,
+    Tipo_marca_pieza VARCHAR(255) NOT NULL,
+    Stock_pieza INT NOT NULL,
+    Descripcion_pieza VARCHAR(500) NULL,
+    ID_Vehiculo INT NOT NULL,
+    Marca_vehiculo VARCHAR(255) NOT NULL,
+    Modelo_vehiculo VARCHAR(255) NOT NULL,
+    ID_Usuario INT NOT NULL,
+    Nombre_usuario VARCHAR(255) NOT NULL,
+    Correo_usuario VARCHAR(255) NOT NULL,
+    Telefono_usuario VARCHAR(255) NOT NULL
+);
+
+INSERT INTO Pieza (ID_Pieza, Tipo_pieza, Nombre_pieza, Material_pieza, Precio_pieza, Tipo_marca_pieza, Stock_pieza, Descripcion_pieza, ID_Vehiculo, Marca_vehiculo, Modelo_vehiculo, ID_Usuario, Nombre_usuario, Correo_usuario, Telefono_usuario) VALUES
 -- Piezas para Honda / Spoon (EK9 y S2000)
-(1, 'Motor', 'Spoon Sports Blue-Printed B16B Complete Engine Block', 'Aluminio', 7500000, 'ORIGINAL', 3, 'Motor B16B balanceado y optimizado por Spoon Sports a 11,000 RPM.', 1, 'Honda', 'Civic Type R EK9', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(2, 'Frenos', 'Spoon Monobloc 4-Pot Caliper Kit (Anodized Blue)', 'Aluminio', 1850000, 'ORIGINAL', 8, 'Kit de pinzas de freno de 4 pistones monobloque Spoon Sports.', 1, 'Honda', 'Civic Type R EK9', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(3, 'Frenos', 'Spoon Monobloc Twin-Block Calipers para S2000', 'Aluminio', 2100000, 'ORIGINAL', 5, 'Pinzas delanteras twin-block Spoon para buje AP1 y AP2.', 2, 'Honda', 'S2000 AP1', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(4, 'Parachoques', 'Spoon S-Tai Front Aero Bumper con Carbon Under-Tray', 'Fibra de carbono', 2600000, 'ORIGINAL', 2, 'Parachoques delantero aerodinámico Spoon con splitter de carbono.', 6, 'Spoon Sports', 'Spoon S2000 GT1 Turbo', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(5, 'Amortiguador', 'Mugen 5-Way Adjustable Damper Suspension Kit', 'Acero', 2900000, 'ORIGINAL', 4, 'Coilovers regulables desarrollados en Suzuka por Mugen.', 8, 'Mugen Motorsports', 'Mugen Civic Type R RR (ABA-FD2)', 1, 'Admin CarHub', 'admin@carhub.cl'),
+(1, 'Motor', 'Spoon Sports Blue-Printed B16B Complete Engine Block', 'Aluminio', 7500000, 'ORIGINAL', 3, 'Motor B16B balanceado y optimizado por Spoon Sports a 11,000 RPM.', 1, 'Honda', 'Civic Type R EK9', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(2, 'Frenos', 'Spoon Monobloc 4-Pot Caliper Kit (Anodized Blue)', 'Aluminio', 1850000, 'ORIGINAL', 8, 'Kit de pinzas de freno de 4 pistones monobloque Spoon Sports.', 1, 'Honda', 'Civic Type R EK9', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(3, 'Frenos', 'Spoon Monobloc Twin-Block Calipers para S2000', 'Aluminio', 2100000, 'ORIGINAL', 5, 'Pinzas delanteras twin-block Spoon para buje AP1 y AP2.', 2, 'Honda', 'S2000 AP1', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(4, 'Parachoques', 'Spoon S-Tai Front Aero Bumper con Carbon Under-Tray', 'Fibra de carbono', 2600000, 'ORIGINAL', 2, 'Parachoques delantero aerodinamico Spoon con splitter de carbono.', 6, 'Spoon Sports', 'Spoon S2000 GT1 Turbo', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(5, 'Amortiguador', 'Mugen 5-Way Adjustable Damper Suspension Kit', 'Acero', 2900000, 'ORIGINAL', 4, 'Coilovers regulables desarrollados en Suzuka por Mugen.', 8, 'Mugen Motorsports', 'Mugen Civic Type R RR (ABA-FD2)', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
 
 -- Piezas para Nissan / Nismo (R34 y S15)
-(6, 'Motor', 'Nismo RB26DETT R-Tune Carbon Air Intake Plenum', 'Fibra de carbono', 3400000, 'ORIGINAL', 4, 'Multiple de admision de carbono Nismo Omori Factory para RB26DETT.', 10, 'Nissan', 'Skyline GT-R R34 V-Spec II', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(7, 'Frenos', 'Brembo Nismo 6-Piston Monobloc Front Brake Kit', 'Aluminio', 4800000, 'ORIGINAL', 3, 'Sistema de frenos sobredimensionado Nismo Z-Tune con discos flotantes.', 13, 'Nismo', 'Skyline GT-R R34 Nismo Z-Tune', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(8, 'Llanta', 'Nismo LMGT4 Forged Wheels 18x9.5J by Rays', 'Aluminio', 3200000, 'ORIGINAL', 6, 'Juego de 4 llantas forjadas Rays Nismo en acabado bronce mate.', 10, 'Nissan', 'Skyline GT-R R34 V-Spec II', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(9, 'Radiador', 'Koyo Hyper V-Core Radiator para Silvia SR20DET', 'Aluminio', 680000, 'ALTERNATIVO', 12, 'Radiador de aluminio de doble panel para 450 HP.', 11, 'Nissan', 'Silvia S15 Spec-R Aero', 1, 'Admin CarHub', 'admin@carhub.cl'),
+(6, 'Motor', 'Nismo RB26DETT R-Tune Carbon Air Intake Plenum', 'Fibra de carbono', 3400000, 'ORIGINAL', 4, 'Multiple de admision de carbono Nismo Omori Factory para RB26DETT.', 10, 'Nissan', 'Skyline GT-R R34 V-Spec II', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(7, 'Frenos', 'Brembo Nismo 6-Piston Monobloc Front Brake Kit', 'Aluminio', 4800000, 'ORIGINAL', 3, 'Sistema de frenos sobredimensionado Nismo Z-Tune con discos flotantes.', 13, 'Nismo', 'Skyline GT-R R34 Nismo Z-Tune', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(8, 'Llanta', 'Nismo LMGT4 Forged Wheels 18x9.5J by Rays', 'Aluminio', 3200000, 'ORIGINAL', 6, 'Juego de 4 llantas forjadas Rays Nismo en acabado bronce mate.', 10, 'Nissan', 'Skyline GT-R R34 V-Spec II', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(9, 'Radiador', 'Koyo Hyper V-Core Radiator para Silvia SR20DET', 'Aluminio', 680000, 'ALTERNATIVO', 12, 'Radiador de aluminio de doble panel para 450 HP.', 11, 'Nissan', 'Silvia S15 Spec-R Aero', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
 
 -- Piezas para Toyota / GR / TRD (Supra, AE86, GR Yaris)
-(10, 'Motor', 'HKS T51R KAI Single Turbo Upgrade Kit para 2JZ-GTE', 'Acero', 5900000, 'ALTERNATIVO', 2, 'Kit completo de turbo HKS con colector T4 y wastegate de 60mm.', 15, 'Toyota', 'Supra RZ Twin Turbo (JZA80)', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(11, 'Amortiguador', 'TRD Circuit Spec Coilover Kit con muelles Eibach', 'Acero', 1950000, 'ORIGINAL', 5, 'Suspension TRD para AE86 con regulacion independiente de rebote.', 16, 'Toyota', 'AE86 Sprinter Trueno GT-Apex', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(12, 'Parachoques', 'GR Carbon Fiber Front Lip Spoiler & Canards', 'Fibra de carbono', 1450000, 'ORIGINAL', 7, 'Splitter frontal y canards Toyota Gazoo Racing para GR Yaris.', 18, 'Gazoo Racing', 'GR Yaris Circuit Pack Rally Spec', 1, 'Admin CarHub', 'admin@carhub.cl'),
+(10, 'Motor', 'HKS T51R KAI Single Turbo Upgrade Kit para 2JZ-GTE', 'Acero', 5900000, 'ALTERNATIVO', 2, 'Kit completo de turbo HKS con colector T4 y wastegate de 60mm.', 15, 'Toyota', 'Supra RZ Twin Turbo (JZA80)', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(11, 'Amortiguador', 'TRD Circuit Spec Coilover Kit con muelles Eibach', 'Acero', 1950000, 'ORIGINAL', 5, 'Suspension TRD para AE86 con regulacion independiente de rebote.', 16, 'Toyota', 'AE86 Sprinter Trueno GT-Apex', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(12, 'Parachoques', 'GR Carbon Fiber Front Lip Spoiler & Canards', 'Fibra de carbono', 1450000, 'ORIGINAL', 7, 'Splitter frontal y canards Toyota Gazoo Racing para GR Yaris.', 18, 'Gazoo Racing', 'GR Yaris Circuit Pack Rally Spec', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
 
 -- Piezas para Mazda / Mazdaspeed (RX-7 Rotativo)
-(13, 'Motor', 'Mazdaspeed 13B-REW Street Port Apex Seal Kit', 'Acero', 1250000, 'ORIGINAL', 10, 'Juego completo de sellos de vertice ceramicos Mazdaspeed.', 22, 'Mazda', 'RX-7 Type R Bathurst R (FD3S)', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(14, 'Parachoques', 'Mazdaspeed A-Spec Type II Front Aero Kit', 'Plastico ABS', 1750000, 'ORIGINAL', 3, 'Frontal aerodinamico con tomas para intercooler frontal de RX-7.', 24, 'Mazdaspeed', 'Mazdaspeed RX-7 A-Spec LM', 1, 'Admin CarHub', 'admin@carhub.cl'),
+(13, 'Motor', 'Mazdaspeed 13B-REW Street Port Apex Seal Kit', 'Acero', 1250000, 'ORIGINAL', 10, 'Juego completo de sellos de vertice ceramicos Mazdaspeed.', 22, 'Mazda', 'RX-7 Type R Bathurst R (FD3S)', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(14, 'Parachoques', 'Mazdaspeed A-Spec Type II Front Aero Kit', 'Plastico ABS', 1750000, 'ORIGINAL', 3, 'Frontal aerodinamico con tomas para intercooler frontal de RX-7.', 24, 'Mazdaspeed', 'Mazdaspeed RX-7 A-Spec LM', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
 
 -- Piezas para Subaru STI & Mitsubishi Ralliart
-(15, 'Frenos', 'STI Brembo Gold Calipers + Endless MX72 Brake Pads', 'Aluminio', 2300000, 'ORIGINAL', 4, 'Set de pinzas doradas STI de 4 pistones con pastillas Endless.', 26, 'Subaru', 'Impreza 22B STi Version', 1, 'Admin CarHub', 'admin@carhub.cl'),
-(16, 'Radiador', 'Ralliart High-Pressure Titanium Radiator Cap + Intercooler', 'Aluminio', 1650000, 'ORIGINAL', 5, 'Intercooler frontal de competicion Ralliart para Lancer Evo VI/IX.', 29, 'Mitsubishi', 'Lancer Evolution VI Tommi Makinen Edition', 1, 'Admin CarHub', 'admin@carhub.cl')
+(15, 'Frenos', 'STI Brembo Gold Calipers + Endless MX72 Brake Pads', 'Aluminio', 2300000, 'ORIGINAL', 4, 'Set de pinzas doradas STI de 4 pistones con pastillas Endless.', 26, 'Subaru', 'Impreza 22B STi Version', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111'),
+(16, 'Radiador', 'Ralliart High-Pressure Titanium Radiator Cap + Intercooler', 'Aluminio', 1650000, 'ORIGINAL', 5, 'Intercooler frontal de competicion Ralliart para Lancer Evo VI/IX.', 29, 'Mitsubishi', 'Lancer Evolution VI Tommi Makinen Edition', 1, 'Admin CarHub', 'admin@carhub.cl', '+56911111111')
 ON DUPLICATE KEY UPDATE
     Tipo_pieza=VALUES(Tipo_pieza),
     Nombre_pieza=VALUES(Nombre_pieza),
@@ -148,4 +191,9 @@ ON DUPLICATE KEY UPDATE
     Modelo_vehiculo=VALUES(Modelo_vehiculo),
     ID_Usuario=VALUES(ID_Usuario),
     Nombre_usuario=VALUES(Nombre_usuario),
-    Correo_usuario=VALUES(Correo_usuario);
+    Correo_usuario=VALUES(Correo_usuario),
+    Telefono_usuario=VALUES(Telefono_usuario);
+
+-- Crear tabla en minúsculas por si MySQL en Linux o Hibernate lo requiere
+CREATE TABLE IF NOT EXISTS pieza LIKE Pieza;
+INSERT INTO pieza SELECT * FROM Pieza ON DUPLICATE KEY UPDATE Nombre_pieza=VALUES(Nombre_pieza);
