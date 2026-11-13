@@ -53,7 +53,9 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 // Permitir registro de usuario, login y sincronización OAuth
                 .requestMatchers(HttpMethod.POST, "/api/v1/usuarios", "/api/v1/usuarios/login", "/api/v1/usuarios/sync-oauth").permitAll()
-                // Proteger los endpoints de usuarios con JWT de Microsoft Entra ID
+                // Permitir consulta de usuario por ID (comunicación inter-microservicios: reclamos, compras, piezas)
+                .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/*").permitAll()
+                // Proteger administración y listado general de usuarios con JWT de Microsoft Entra ID
                 .requestMatchers("/api/v1/usuarios/**").authenticated()
                 .anyRequest().permitAll()
             )

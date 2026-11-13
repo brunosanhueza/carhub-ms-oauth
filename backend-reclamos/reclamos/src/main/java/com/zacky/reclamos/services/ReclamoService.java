@@ -28,7 +28,12 @@ public class ReclamoService {
 
     public ReclamoModel crearReclamo(Integer idUsuario, String tipoReclamo, String descripcionReclamo) {
 
-        UsuarioDto usuario = restTemplate.getForObject(URL_USUARIO + idUsuario, UsuarioDto.class);
+        UsuarioDto usuario = null;
+        try {
+            usuario = restTemplate.getForObject(URL_USUARIO + idUsuario, UsuarioDto.class);
+        } catch (Exception e) {
+            System.err.println("[WARN] No se pudo obtener información del usuario ID " + idUsuario + ": " + e.getMessage());
+        }
 
         ReclamoModel reclamo = new ReclamoModel();
         reclamo.setTipoReclamo(tipoReclamo);
@@ -36,15 +41,26 @@ public class ReclamoService {
         reclamo.setEstadoReclamo("PENDIENTE");
         reclamo.setFechaReclamo(new Date());
 
-        reclamo.setIdUsuario(usuario.getIdUser());
-        reclamo.setNameUser(usuario.getNameUser());
-        reclamo.setEmailUser(usuario.getEmailUser());
-        reclamo.setPhoneUser(usuario.getPhoneUser());
+        if (usuario != null) {
+            reclamo.setIdUsuario(usuario.getIdUser() != null ? usuario.getIdUser() : idUsuario);
+            reclamo.setNameUser(usuario.getNameUser() != null ? usuario.getNameUser() : "Usuario #" + idUsuario);
+            reclamo.setEmailUser(usuario.getEmailUser() != null ? usuario.getEmailUser() : "cliente" + idUsuario + "@carhub.cl");
+            reclamo.setPhoneUser(usuario.getPhoneUser() != null ? usuario.getPhoneUser() : "+56900000000");
+        } else {
+            reclamo.setIdUsuario(idUsuario);
+            reclamo.setNameUser("Usuario #" + idUsuario);
+            reclamo.setEmailUser("cliente" + idUsuario + "@carhub.cl");
+            reclamo.setPhoneUser("+56900000000");
+        }
 
         ReclamoModel reclamoGuardado = reclamoRepository.save(reclamo);
 
         // Publicación asíncrona a RabbitMQ para generar ticket de soporte
-        reclamoEventPublisher.publicarTicketReclamo(reclamoGuardado);
+        try {
+            reclamoEventPublisher.publicarTicketReclamo(reclamoGuardado);
+        } catch (Exception e) {
+            System.err.println("[WARN] No se pudo publicar evento a RabbitMQ: " + e.getMessage());
+        }
 
         return reclamoGuardado;
     }
