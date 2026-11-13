@@ -128,13 +128,6 @@ EOF
 echo "[OK] Bases de datos creadas:"
 docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SHOW DATABASES WHERE \`Database\` IN ('automotriz','vehiculos','piezas','reclamos','compra','usuarios');"
 
-# Poblar datos iniciales automáticos (Marcas OEM, Preparadoras JDM, Vehículos y Piezas)
-if [ -f "$SCRIPT_DIR/init-data.sql" ]; then
-    echo "[INFO] Poblando datos iniciales JDM en automotriz, vehiculos y piezas..."
-    docker exec -i mysql-carhub mysql -uroot -pzacky5023 < "$SCRIPT_DIR/init-data.sql" || true
-    echo "[OK] Catálogo de concesionarias, preparadoras y vehículos semillado exitosamente."
-fi
-
 # Configurar el Clúster de RabbitMQ (Unir rabbitmq2 a rabbitmq1)
 echo "[INFO] Sincronizando Clúster RabbitMQ (2 Nodos)..."
 count=0
@@ -176,8 +169,15 @@ echo "================================================================="
 echo "[INFO] Iniciando contenedores de los microservicios en segundo plano..."
 $COMPOSE_CMD up -d "${SERVICES[@]}"
 
-echo "[INFO] Esperando 15 segundos a que los microservicios inicialicen sus conexiones..."
+echo "[INFO] Esperando 15 segundos a que los microservicios inicialicen sus conexiones y Hibernate cree las tablas..."
 sleep 15
+
+# Poblar datos iniciales automáticos DESPUÉS de que Hibernate haya creado las tablas (ddl-auto=update)
+if [ -f "$SCRIPT_DIR/init-data.sql" ]; then
+    echo "[INFO] Semillando datos iniciales JDM en automotriz, vehiculos y piezas..."
+    docker exec -i mysql-carhub mysql -uroot -pzacky5023 < "$SCRIPT_DIR/init-data.sql" || true
+    echo "[OK] Catálogo de concesionarias, preparadoras, vehículos y piezas insertado exitosamente."
+fi
 
 # 6. FASE 4: Instalar Nginx, Compilar Frontend Angular y Configurar SSL (80 & 443)
 echo "================================================================="
