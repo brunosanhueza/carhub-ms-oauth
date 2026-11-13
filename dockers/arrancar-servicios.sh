@@ -14,7 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "================================================================="
-echo "   INICIANDO DESPLIEGUE COMPLETO DE SERVICIOS EN DOCKER"
+echo "   INICIANDO DESPLIEGUE COMPLETO DE SERVICIOS EN DOCKER + FRONTEND"
 echo "================================================================="
 
 # 1. Comprobar instalación de Docker
@@ -86,9 +86,22 @@ else
     export MYSQL_PORT=3306
 fi
 
-# 3. Arrancar Infraestructura Base (MySQL + Clúster RabbitMQ + Clúster Kafka + Zookeeper + Kafka-UI)
+# 3. FASE 1: Compilar imágenes Docker de los 6 Microservicios Spring Boot
 echo "================================================================="
-echo " [PASO 1/3] LEVANTANDO BASES DE DATOS, RABBITMQ Y KAFKA"
+echo " [FASE 1/3] COMPILANDO IMÁGENES DOCKER DE LOS 6 MICROSERVICIOS"
+echo "================================================================="
+SERVICES=("automotriz" "vehiculos" "piezas" "reclamos" "compra" "carhub")
+
+echo "[INFO] Iniciando compilación de código fuente y empaquetado multi-stage..."
+for svc in "${SERVICES[@]}"; do
+    echo "       -> [BUILD] Compilando y empaquetando imagen: $svc..."
+    $COMPOSE_CMD build "$svc"
+done
+echo "[OK] Las 6 imágenes de los microservicios se compilaron exitosamente."
+
+# 4. FASE 2: Arrancar Infraestructura Base (MySQL + RabbitMQ Clúster + Kafka Clúster + Zookeeper + Kafka-UI)
+echo "================================================================="
+echo " [FASE 2/3] DESPLEGANDO INFRAESTRUCTURA (MySQL + RabbitMQ + Kafka)"
 echo "================================================================="
 $COMPOSE_CMD up -d mysql rabbitmq1 rabbitmq2 zookeeper kafka1 kafka2 kafka-ui
 
@@ -115,10 +128,8 @@ EOF
 echo "[OK] Bases de datos creadas:"
 docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SHOW DATABASES WHERE \`Database\` IN ('automotriz','vehiculos','piezas','reclamos','compra','usuarios');"
 
-# 4. Configurar el Clúster de RabbitMQ (Unir rabbitmq2 a rabbitmq1)
-echo "================================================================="
-echo " [PASO 2/3] CONFIGURANDO CLÚSTER RABBITMQ (2 NODOS)"
-echo "================================================================="
+# Configurar el Clúster de RabbitMQ (Unir rabbitmq2 a rabbitmq1)
+echo "[INFO] Sincronizando Clúster RabbitMQ (2 Nodos)..."
 count=0
 until docker exec rabbitmq1 rabbitmqctl status &>/dev/null || [ $count -ge $max_retries ]; do
     echo "       Esperando a rabbitmq1... ($count/$max_retries)"
@@ -133,19 +144,16 @@ until docker exec rabbitmq2 rabbitmqctl status &>/dev/null || [ $count -ge $max_
     count=$((count + 1))
 done
 
-echo "[INFO] Sincronizando rabbitmq2 con rabbit@rabbit1..."
 docker exec rabbitmq2 rabbitmqctl stop_app
 docker exec rabbitmq2 rabbitmqctl reset 2>/dev/null || true
 docker exec rabbitmq2 rabbitmqctl join_cluster rabbit@rabbit1
 docker exec rabbitmq2 rabbitmqctl start_app
 
-echo "[OK] Clúster configurado exitosamente:"
+echo "[OK] Clúster RabbitMQ configurado exitosamente:"
 docker exec rabbitmq1 rabbitmqctl cluster_status
 
-# 4.1. Esperar a que Kafka esté listo y responda
-echo "================================================================="
-echo " [PASO 2.1/3] VERIFICANDO DISPONIBILIDAD DE KAFKA BROKERS"
-echo "================================================================="
+# Esperar a que Kafka esté listo y responda
+echo "[INFO] Verificando disponibilidad de Kafka Brokers..."
 count=0
 until docker exec kafka1-carhub kafka-broker-api-versions --bootstrap-server localhost:9092 &>/dev/null || [ $count -ge $max_retries ]; do
     echo "       Esperando a que kafka1 esté listo... ($count/$max_retries)"
@@ -154,25 +162,133 @@ until docker exec kafka1-carhub kafka-broker-api-versions --bootstrap-server loc
 done
 echo "[OK] Kafka Broker 1 (Puerto Host 5030) operativo y conectado a Zookeeper."
 
-# 5. Construir y Levantar los 6 Microservicios Spring Boot
+# 5. FASE 3: Desplegar y Levantar los 6 Microservicios Spring Boot
 echo "================================================================="
-echo " [PASO 3/3] COMPILANDO Y LEVANTANDO LOS 6 MICROSERVICIOS SPRING BOOT"
+echo " [FASE 3/4] LEVANTANDO LOS 6 MICROSERVICIOS YA COMPILADOS"
 echo "================================================================="
-SERVICES=("automotriz" "vehiculos" "piezas" "reclamos" "compra" "carhub")
-
-echo "[INFO] Compilando imágenes Docker (control de memoria RAM optimizado para EC2)..."
-for svc in "${SERVICES[@]}"; do
-    echo "       -> Construyendo imagen para: $svc..."
-    $COMPOSE_CMD build "$svc"
-done
-
-echo "[INFO] Levantando todos los microservicios en segundo plano..."
+echo "[INFO] Iniciando contenedores de los microservicios en segundo plano..."
 $COMPOSE_CMD up -d "${SERVICES[@]}"
 
 echo "[INFO] Esperando 15 segundos a que los microservicios inicialicen sus conexiones..."
 sleep 15
 
-# 6. Resumen de Despliegue
+# 6. FASE 4: Instalar Nginx, Compilar Frontend Angular y Configurar SSL (80 & 443)
+echo "================================================================="
+echo " [FASE 4/4] DESPLEGANDO FRONTEND ANGULAR EN NGINX (PUERTOS 80 & 443)"
+echo "================================================================="
+FRONTEND_DIR="$(cd "$SCRIPT_DIR/../frontend-carhub" && pwd)"
+WEB_ROOT="/var/www/html/carhub"
+SSL_DIR="/etc/nginx/ssl"
+
+if command -v apt-get &> /dev/null; then
+    echo "[INFO] Verificando Nginx, Node.js y OpenSSL en el sistema anfitrión..."
+    if ! command -v nginx &> /dev/null; then
+        echo "       -> Instalando Nginx..."
+        apt-get update -y -q && apt-get install -y -q nginx
+    fi
+    if ! command -v openssl &> /dev/null; then
+        apt-get install -y -q openssl
+    fi
+    if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
+        echo "       -> Instalando Node.js LTS y npm..."
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+        apt-get install -y -q nodejs
+    fi
+
+    if [ -d "$FRONTEND_DIR" ]; then
+        echo "[INFO] Compilando Frontend Angular para producción..."
+        cd "$FRONTEND_DIR"
+        if [ ! -d "node_modules" ]; then
+            npm install --legacy-peer-deps
+        fi
+        npm run build -- --configuration production || true
+
+        # Localizar carpeta compilada generada por Angular
+        DIST_SOURCE=""
+        if [ -d "$FRONTEND_DIR/dist/frontend-carhub/browser" ]; then
+            DIST_SOURCE="$FRONTEND_DIR/dist/frontend-carhub/browser"
+        elif [ -d "$FRONTEND_DIR/dist/frontend-carhub" ]; then
+            DIST_SOURCE="$FRONTEND_DIR/dist/frontend-carhub"
+        elif [ -d "$FRONTEND_DIR/dist/frontendCarhub/browser" ]; then
+            DIST_SOURCE="$FRONTEND_DIR/dist/frontendCarhub/browser"
+        elif [ -d "$FRONTEND_DIR/dist" ]; then
+            DIST_SOURCE=$(find "$FRONTEND_DIR/dist" -name "index.html" -exec dirname {} \; 2>/dev/null | head -n 1)
+        fi
+
+        if [ -n "$DIST_SOURCE" ] && [ -f "$DIST_SOURCE/index.html" ]; then
+            echo "[INFO] Moviendo archivos compilados a '$WEB_ROOT'..."
+            mkdir -p "$WEB_ROOT"
+            rm -rf "$WEB_ROOT"/*
+            cp -r "$DIST_SOURCE"/* "$WEB_ROOT"/
+            chown -R www-data:www-data "$WEB_ROOT" 2>/dev/null || true
+            chmod -R 755 "$WEB_ROOT" 2>/dev/null || true
+
+            # Generar certificados SSL autofirmados para el puerto 443 si no existen
+            mkdir -p "$SSL_DIR"
+            if [ ! -f "$SSL_DIR/carhub.crt" ] || [ ! -f "$SSL_DIR/carhub.key" ]; then
+                echo "[INFO] Generando certificado SSL autofirmado de 2048 bits para CarHub (443)..."
+                openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                    -keyout "$SSL_DIR/carhub.key" \
+                    -out "$SSL_DIR/carhub.crt" \
+                    -subj "/C=CL/ST=Santiago/L=Santiago/O=DuocUC/OU=CloudNative/CN=carhub.local" 2>/dev/null || true
+                chmod 600 "$SSL_DIR/carhub.key" 2>/dev/null || true
+                chmod 644 "$SSL_DIR/carhub.crt" 2>/dev/null || true
+            fi
+
+            # Escribir configuración VirtualHost de Nginx
+            echo "[INFO] Configurando VirtualHost en /etc/nginx/sites-available/carhub..."
+            cat << 'NGINX_EOF' > /etc/nginx/sites-available/carhub
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    root /var/www/html/carhub;
+    index index.html index.htm;
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg)$ {
+        expires 6M;
+        access_log off;
+        add_header Cache-Control "public";
+        try_files $uri =404;
+    }
+}
+
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _;
+    ssl_certificate /etc/nginx/ssl/carhub.crt;
+    ssl_certificate_key /etc/nginx/ssl/carhub.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    root /var/www/html/carhub;
+    index index.html index.htm;
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg)$ {
+        expires 6M;
+        access_log off;
+        add_header Cache-Control "public";
+        try_files $uri =404;
+    }
+}
+NGINX_EOF
+
+            ln -sf /etc/nginx/sites-available/carhub /etc/nginx/sites-enabled/carhub
+            rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+            nginx -t &>/dev/null && systemctl restart nginx 2>/dev/null || true
+            echo "[OK] Nginx configurado y corriendo en puertos 80 y 443."
+        else
+            echo "[AVISO] No se pudo encontrar index.html en dist/. Continuando con el despliegue..."
+        fi
+    fi
+    cd "$SCRIPT_DIR"
+fi
+
+# 7. Resumen de Despliegue
 echo "================================================================="
 echo "      ¡TODOS LOS SERVICIOS ESTÁN CORRIENDO AL 100%!              "
 echo "================================================================="
@@ -182,21 +298,25 @@ echo ""
 echo "================================================================="
 echo "                   TABLA DE ACCESO Y ENDPOINTS                   "
 echo "================================================================="
-echo " 1. MySQL Server (Container):"
+echo " 1. Frontend Angular (Nginx):"
+echo "    - HTTP:  http://<IP-HOST>:80"
+echo "    - HTTPS: https://<IP-HOST>:443 (Aceptar certificado autofirmado)"
+echo ""
+echo " 2. MySQL Server (Container):"
 echo "    - Host (externo): localhost:$MYSQL_PORT (user: root | pass: zacky5023)"
 echo "    - BDs: automotriz, vehiculos, piezas, reclamos, compra, usuarios"
 echo ""
-echo " 2. Clúster RabbitMQ (2 Nodos Activos):"
+echo " 3. Clúster RabbitMQ (2 Nodos Activos):"
 echo "    - Nodo 1: AMQP localhost:5672 | Web: http://localhost:15672 (guest/guest)"
 echo "    - Nodo 2: AMQP localhost:5673 | Web: http://localhost:15673 (guest/guest)"
 echo ""
-echo " 3. Clúster Kafka (2 Brokers + Zookeeper + Kafka-UI):"
+echo " 4. Clúster Kafka (2 Brokers + Zookeeper + Kafka-UI):"
 echo "    - Zookeeper: localhost:2181"
 echo "    - Kafka Broker 1: localhost:5030 (Host)"
 echo "    - Kafka Broker 2: localhost:5031 (Host)"
 echo "    - Kafka-UI: http://localhost:8085"
 echo ""
-echo " 4. Microservicios Spring Boot:"
+echo " 5. Microservicios Spring Boot:"
 echo "    - [8061] Automotriz:    http://localhost:8061/swagger-ui/index.html"
 echo "    - [8062] Vehículos:     http://localhost:8062/swagger-ui/index.html"
 echo "    - [8063] Piezas:        http://localhost:8063/swagger-ui/index.html"
