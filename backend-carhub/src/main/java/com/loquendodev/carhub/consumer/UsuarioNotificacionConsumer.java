@@ -46,7 +46,7 @@ public class UsuarioNotificacionConsumer {
 
             // Confirmación explícita (ACK): El mensaje fue procesado correctamente
             channel.basicAck(deliveryTag, false);
-            log.info("[CONSUMER-USUARIO] [ACK CONFIRMADO] Notificación para {} procesada exitosamente.", mensaje.getEmailUser());
+            log.info("[CONSUMER-USUARIO] [A(604.800.000 mCK CONFIRMADO] Notificación para {} procesada exitosamente.", mensaje.getEmailUser());
             log.info("=================================================================");
 
         } catch (Exception ex) {
