@@ -1,11 +1,11 @@
 export const environment = {
   production: false,
-  urlUsuarios:  `https://mv6xudxbi7.execute-api.us-east-1.amazonaws.com/api/v1/usuarios`,
-  urlVehiculos: `https://mv6xudxbi7.execute-api.us-east-1.amazonaws.com/api/v2/vehiculos`,
-  urlAutomotriz:`https://mv6xudxbi7.execute-api.us-east-1.amazonaws.com/api/v3/automotriz`,
-  urlCompra:    `https://mv6xudxbi7.execute-api.us-east-1.amazonaws.com/api/v4/compra`,
-  urlReclamos:  `https://mv6xudxbi7.execute-api.us-east-1.amazonaws.com/reclamos`,
-  urlPiezas:    `https://mv6xudxbi7.execute-api.us-east-1.amazonaws.com/api/v7/piezas`,
+  urlUsuarios:  `/api/v1/usuarios`,
+  urlVehiculos: `/api/v2/vehiculos`,
+  urlAutomotriz:`/api/v3/automotriz`,
+  urlCompra:    `/api/v4/compra`,
+  urlReclamos:  `/reclamos`,
+  urlPiezas:    `/api/v7/piezas`,
 
   // Configuración de Microsoft Entra ID (Azure AD) - OAuth2.0
   azure: {

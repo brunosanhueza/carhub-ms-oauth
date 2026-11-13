@@ -236,7 +236,7 @@ if command -v apt-get &> /dev/null; then
             fi
 
             # Escribir configuración VirtualHost de Nginx
-            echo "[INFO] Configurando VirtualHost en /etc/nginx/sites-available/carhub..."
+            echo "[INFO] Configurando VirtualHost en /etc/nginx/sites-available/carhub con Proxy Inverso hacia microservicios..."
             cat << 'NGINX_EOF' > /etc/nginx/sites-available/carhub
 server {
     listen 80 default_server;
@@ -244,9 +244,65 @@ server {
     server_name _;
     root /var/www/html/carhub;
     index index.html index.htm;
+
+    # Microservicio Usuarios (backend-carhub: 8066)
+    location /api/v1/ {
+        proxy_pass http://127.0.0.1:8066/api/v1/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Vehículos (backend-carhub-vehiculo: 8062)
+    location /api/v2/ {
+        proxy_pass http://127.0.0.1:8062/api/v2/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Automotriz (backend-automotriz: 8061)
+    location /api/v3/ {
+        proxy_pass http://127.0.0.1:8061/api/v3/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Compra (backend-compra: 8065)
+    location /api/v4/ {
+        proxy_pass http://127.0.0.1:8065/api/v4/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Reclamos (backend-reclamos: 8064)
+    location /reclamos {
+        proxy_pass http://127.0.0.1:8064/reclamos;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Piezas (backend-piezas: 8063)
+    location /api/v7/ {
+        proxy_pass http://127.0.0.1:8063/api/v7/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }
+
     location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg)$ {
         expires 6M;
         access_log off;
@@ -265,9 +321,65 @@ server {
     ssl_ciphers HIGH:!aNULL:!MD5;
     root /var/www/html/carhub;
     index index.html index.htm;
+
+    # Microservicio Usuarios (backend-carhub: 8066)
+    location /api/v1/ {
+        proxy_pass http://127.0.0.1:8066/api/v1/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Vehículos (backend-carhub-vehiculo: 8062)
+    location /api/v2/ {
+        proxy_pass http://127.0.0.1:8062/api/v2/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Automotriz (backend-automotriz: 8061)
+    location /api/v3/ {
+        proxy_pass http://127.0.0.1:8061/api/v3/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Compra (backend-compra: 8065)
+    location /api/v4/ {
+        proxy_pass http://127.0.0.1:8065/api/v4/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Reclamos (backend-reclamos: 8064)
+    location /reclamos {
+        proxy_pass http://127.0.0.1:8064/reclamos;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Microservicio Piezas (backend-piezas: 8063)
+    location /api/v7/ {
+        proxy_pass http://127.0.0.1:8063/api/v7/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }
+
     location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg)$ {
         expires 6M;
         access_log off;
