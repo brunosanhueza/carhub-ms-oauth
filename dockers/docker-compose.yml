@@ -223,6 +223,7 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SERVICES_USUARIO_URL=http://carhub:8066/api/v1/usuarios/
       - SERVICES_VEHICULO_URL=http://vehiculos:8062/api/v2/vehiculos/
+      - SERVICES_AUTOMOTRIZ_URL=http://automotriz:8061/api/v3/automotriz/
       - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
     depends_on:
       - mysql
@@ -277,6 +278,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29093
       - SERVICES_USUARIO_URL=http://carhub:8066/api/v1/usuarios/
       - SERVICES_VEHICULO_URL=http://vehiculos:8062/api/v2/vehiculos/
+      - SERVICES_AUTOMOTRIZ_URL=http://automotriz:8061/api/v3/automotriz/
       - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
     depends_on:
       - mysql
