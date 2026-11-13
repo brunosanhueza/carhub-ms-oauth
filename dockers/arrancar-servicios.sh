@@ -107,12 +107,21 @@ $COMPOSE_CMD up -d mysql rabbitmq1 rabbitmq2 zookeeper kafka1 kafka2 kafka-ui
 
 echo "[INFO] Esperando a que MySQL acepte consultas SQL con credenciales root..."
 count=0
-max_retries=30
-until docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SELECT 1;" &>/dev/null || [ $count -ge $max_retries ]; do
+max_retries=40
+while [ $count -lt $max_retries ]; do
+    if docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SELECT 1;" &>/dev/null 2>&1; then
+        echo "[OK] MySQL respondió correctamente."
+        break
+    fi
     echo "       Esperando respuesta de MySQL... ($count/$max_retries)"
     sleep 3
     count=$((count + 1))
 done
+
+if [ $count -ge $max_retries ]; then
+    echo "[ERROR] MySQL no respondió tras $max_retries intentos. Abortando."
+    exit 1
+fi
 
 # Crear explícitamente las 6 bases de datos requeridas por la rúbrica
 echo "[INFO] Creando y asegurando las 6 bases de datos para los microservicios..."
@@ -131,14 +140,16 @@ docker exec mysql-carhub mysql -uroot -pzacky5023 -e "SHOW DATABASES WHERE \`Dat
 # Configurar el Clúster de RabbitMQ (Unir rabbitmq2 a rabbitmq1)
 echo "[INFO] Sincronizando Clúster RabbitMQ (2 Nodos)..."
 count=0
-until docker exec rabbitmq1 rabbitmqctl status &>/dev/null || [ $count -ge $max_retries ]; do
+while [ $count -lt $max_retries ]; do
+    if docker exec rabbitmq1 rabbitmqctl status &>/dev/null 2>&1; then break; fi
     echo "       Esperando a rabbitmq1... ($count/$max_retries)"
     sleep 3
     count=$((count + 1))
 done
 
 count=0
-until docker exec rabbitmq2 rabbitmqctl status &>/dev/null || [ $count -ge $max_retries ]; do
+while [ $count -lt $max_retries ]; do
+    if docker exec rabbitmq2 rabbitmqctl status &>/dev/null 2>&1; then break; fi
     echo "       Esperando a rabbitmq2... ($count/$max_retries)"
     sleep 3
     count=$((count + 1))
@@ -155,7 +166,8 @@ docker exec rabbitmq1 rabbitmqctl cluster_status
 # Esperar a que Kafka esté listo y responda
 echo "[INFO] Verificando disponibilidad de Kafka Brokers..."
 count=0
-until docker exec kafka1-carhub kafka-broker-api-versions --bootstrap-server localhost:9092 &>/dev/null || [ $count -ge $max_retries ]; do
+while [ $count -lt $max_retries ]; do
+    if docker exec kafka1-carhub kafka-broker-api-versions --bootstrap-server localhost:9092 &>/dev/null 2>&1; then break; fi
     echo "       Esperando a que kafka1 esté listo... ($count/$max_retries)"
     sleep 3
     count=$((count + 1))
@@ -169,8 +181,8 @@ echo "================================================================="
 echo "[INFO] Iniciando contenedores de los microservicios en segundo plano..."
 $COMPOSE_CMD up -d "${SERVICES[@]}"
 
-echo "[INFO] Esperando 15 segundos a que los microservicios inicialicen sus conexiones y Hibernate cree las tablas..."
-sleep 15
+echo "[INFO] Esperando 30 segundos a que los microservicios inicialicen sus conexiones y Hibernate cree las tablas..."
+sleep 30
 
 # Poblar datos iniciales automáticos DESPUÉS de que Hibernate haya creado las tablas (ddl-auto=update)
 if [ -f "$SCRIPT_DIR/init-data.sql" ]; then
