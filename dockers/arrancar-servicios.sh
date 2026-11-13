@@ -40,6 +40,10 @@ CONTAINERS=(
     "mysql-carhub"
     "rabbitmq1"
     "rabbitmq2"
+    "zookeeper-carhub"
+    "kafka1-carhub"
+    "kafka2-carhub"
+    "kafka-ui-carhub"
     "backend-automotriz"
     "backend-vehiculos"
     "backend-piezas"
@@ -82,11 +86,11 @@ else
     export MYSQL_PORT=3306
 fi
 
-# 3. Arrancar Infraestructura Base (MySQL + Clúster RabbitMQ)
+# 3. Arrancar Infraestructura Base (MySQL + Clúster RabbitMQ + Clúster Kafka + Zookeeper + Kafka-UI)
 echo "================================================================="
-echo " [PASO 1/3] LEVANTANDO BASES DE DATOS Y MENSAJERÍA (MySQL + RabbitMQ)"
+echo " [PASO 1/3] LEVANTANDO BASES DE DATOS, RABBITMQ Y KAFKA"
 echo "================================================================="
-$COMPOSE_CMD up -d mysql rabbitmq1 rabbitmq2
+$COMPOSE_CMD up -d mysql rabbitmq1 rabbitmq2 zookeeper kafka1 kafka2 kafka-ui
 
 echo "[INFO] Esperando a que MySQL acepte consultas SQL con credenciales root..."
 count=0
@@ -138,6 +142,18 @@ docker exec rabbitmq2 rabbitmqctl start_app
 echo "[OK] Clúster configurado exitosamente:"
 docker exec rabbitmq1 rabbitmqctl cluster_status
 
+# 4.1. Esperar a que Kafka esté listo y responda
+echo "================================================================="
+echo " [PASO 2.1/3] VERIFICANDO DISPONIBILIDAD DE KAFKA BROKERS"
+echo "================================================================="
+count=0
+until docker exec kafka1-carhub kafka-broker-api-versions --bootstrap-server localhost:9092 &>/dev/null || [ $count -ge $max_retries ]; do
+    echo "       Esperando a que kafka1 esté listo... ($count/$max_retries)"
+    sleep 3
+    count=$((count + 1))
+done
+echo "[OK] Kafka Broker 1 (Puerto Host 5030) operativo y conectado a Zookeeper."
+
 # 5. Construir y Levantar los 6 Microservicios Spring Boot
 echo "================================================================="
 echo " [PASO 3/3] COMPILANDO Y LEVANTANDO LOS 6 MICROSERVICIOS SPRING BOOT"
@@ -174,7 +190,13 @@ echo " 2. Clúster RabbitMQ (2 Nodos Activos):"
 echo "    - Nodo 1: AMQP localhost:5672 | Web: http://localhost:15672 (guest/guest)"
 echo "    - Nodo 2: AMQP localhost:5673 | Web: http://localhost:15673 (guest/guest)"
 echo ""
-echo " 3. Microservicios Spring Boot:"
+echo " 3. Clúster Kafka (2 Brokers + Zookeeper + Kafka-UI):"
+echo "    - Zookeeper: localhost:2181"
+echo "    - Kafka Broker 1: localhost:5030 (Host)"
+echo "    - Kafka Broker 2: localhost:5031 (Host)"
+echo "    - Kafka-UI: http://localhost:8085"
+echo ""
+echo " 4. Microservicios Spring Boot:"
 echo "    - [8061] Automotriz:    http://localhost:8061/swagger-ui/index.html"
 echo "    - [8062] Vehículos:     http://localhost:8062/swagger-ui/index.html"
 echo "    - [8063] Piezas:        http://localhost:8063/swagger-ui/index.html"

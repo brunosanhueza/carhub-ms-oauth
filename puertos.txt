@@ -1,18 +1,26 @@
 ===========================================================
-  PUERTOS Y BASES DE DATOS DE LOS MICROSERVICIOS (MySQL)
+  PUERTOS Y SERVICIOS DE LA ARQUITECTURA CARHUB (CLOUD NATIVE)
 ===========================================================
 
-Microservicio:            Puerto:   Base de Datos (MySQL):
------------------------------------------------------------
-backend-automotriz        8061      automotriz
-backend-carhub-vehiculo   8062      vehiculos
-backend-piezas            8063      piezas
-backend-reclamos          8064      reclamos
-backend-compra            8065      compra
-backend-carhub            8066      usuarios
+Microservicio:            Puerto:   Base de Datos (MySQL):   Mensajería / Streaming:
+--------------------------------------------------------------------------------------
+backend-automotriz        8061      automotriz               REST Síncrono
+backend-carhub-vehiculo   8062      vehiculos                Kafka Productor (5030)
+backend-piezas            8063      piezas                   REST Síncrono
+backend-reclamos          8064      reclamos                 RabbitMQ (5672) + DLQ
+backend-compra            8065      compra                   RabbitMQ (5672) + Kafka Productor (5030)
+backend-carhub            8066      usuarios                 RabbitAdmin + KafkaAdmin + Consumidor Kafka
 
------------------------------------------------------------
-Host de Base de Datos:    100.57.199.0:3306
-Usuario:                  root
-Contraseña:               chocolate
+===========================================================
+  INFRAESTRUCTURA DE MENSAJERÍA, STREAMING Y GESTIÓN
+===========================================================
+Servicio:                 Puerto Host:  Detalle / Acceso:
+--------------------------------------------------------------------------------------
+MySQL 8.0                 3306          Base de datos relacional (6 esquemas)
+RabbitMQ Nodo 1 (Líder)   5672 / 15672  AMQP Broker / Panel Web (guest/guest)
+RabbitMQ Nodo 2 (Miembro) 5673 / 15673  AMQP Broker / Panel Web (guest/guest)
+Zookeeper                 2181          Coordinador de clúster Kafka
+Kafka Broker 1            5030          Apache Kafka Broker 1 (Líder)
+Kafka Broker 2            5031          Apache Kafka Broker 2 (Réplicas)
+Kafka-UI                  8085          Panel Web Kafka UI (http://localhost:8085)
 ===========================================================

@@ -1,7 +1,7 @@
 # 🚗 CarHub - Arquitectura Cloud Native
 
-> **Evaluación EP4 · DSY1107 Desarrollo Cloud Native I · Duoc UC**  
-> **Tema:** Arquitectura Cloud Native: API Gateway, Microservicios y Mensajería Resiliente con Clúster RabbitMQ  
+> **Evaluación Parcial N° 5 · DSY1107 Desarrollo Cloud Native I · Duoc UC**  
+> **Tema:** Integración de Sistemas de Streaming y Analítica con Apache Kafka, Coexistencia Resiliente con Clúster RabbitMQ y Seguridad OAuth2 / Microsoft Entra ID  
 > **Docente:** Jorge Niochet  
 > **Integrantes:**  
 > - Bruno Soto  
@@ -13,159 +13,242 @@
 
 ## 📌 1. Descripción del Proyecto
 
-**CarHub** es una plataforma distribuida basada en arquitectura **Cloud Native** diseñada para la gestión, compra, soporte y cotización de vehículos y repuestos automotrices. 
+**CarHub** es una plataforma distribuida basada en arquitectura **Cloud Native** diseñada para la gestión, compra, soporte y cotización de vehículos y repuestos automotrices.
 
-El sistema implementa un modelo híbrido de comunicación:
-1. **Carril Síncrono (HTTP REST / JSON):** Manejo de comandos y consultas inmediatas desde el frontend SPA hacia los microservicios, securizado mediante **Microsoft Entra ID (Azure AD)** con tokens **OAuth2 / JWT**.
-2. **Carril Asíncrono (Event-Driven Messaging):** Desacoplamiento de procesos transaccionales críticos (emisión de tickets de compra, registro de reclamos de soporte y notificaciones) mediante un **Clúster de alta disponibilidad de RabbitMQ (2 nodos)** con colas durables, enrutamiento Direct/Topic y tolerancia a fallos mediante **Dead Letter Queues (DLQ)** y confirmación manual (**ACK / NACK**).
+El sistema implementa un modelo de comunicación multicapa altamente resiliente y escalable:
+1. **Carril Síncrono (HTTP REST / JSON):** Comunicación directa cliente-servidor desde el frontend SPA (Angular) hacia los microservicios, securizado mediante **Microsoft Entra ID (Azure AD)** con tokens **OAuth2 / JWT**.
+2. **Carril Asíncrono Transaccional (RabbitMQ Clúster de 2 Nodos):** Desacoplamiento de procesos operacionales discretos punto a punto (emisión de tickets de compra y tickets de reclamos de soporte) con colas durables, confirmación manual explícita (**ACK / NACK**) y aislamiento de fallos mediante **Dead Letter Queues (DLQ)**.
+3. **Carril Asíncrono de Streaming y Analítica (Apache Kafka Clúster de 2 Brokers):** Canal de procesamiento de eventos en tiempo real a gran escala para telemetría, demanda vehicular y analítica de ventas, con particionado balanceado, factor de replicación 2, políticas de retención temporal y grupos de consumidores dedicados (**Consumer Groups**).
 
 ---
 
-## 🏗️ 2. Arquitectura del Sistema
+## ⚖️ 2. Justificación del Diseño: Convivencia RabbitMQ vs Apache Kafka
+
+| Criterio de Comparación | RabbitMQ (Mensajería Transaccional) 🐇 | Apache Kafka (Streaming y Analítica) ⚡ |
+| :--- | :--- | :--- |
+| **Patrón Principal** | Cola de mensajes de trabajo (Work Queues) y enrutamiento directo / tópicos transaccionales. | Registro inmutable de eventos distribuidos (Append-only Distributed Log). |
+| **Caso de Uso en CarHub** | Emisión de facturas / tickets de compra y registro de tickets de soporte postventa. | Registro continuo de analítica de ventas en vivo y telemetría de interacción / demanda por vehículo. |
+| **Ciclo de Vida del Mensaje** | El mensaje se elimina de la cola una vez confirmado con `basicAck`. | Los eventos persisten en el log según la política de retención configurada (ej. 3 a 7 días), permitiendo replay y múltiples consumidores. |
+| **Manejo de Errores** | Confirmación manual con rechazo explícito `basicNack(requeue = false)` desviando a **Dead Letter Exchange (DLX)** y **DLQ**. | `DefaultErrorHandler` con reintentos (`FixedBackOff`), deserializador tolerante a fallos (`ErrorHandlingDeserializer`) y **Dead Letter Topic (DLT)**. |
+| **Garantía y Escalabilidad** | Procesamiento unitario con alta fidelidad transaccional. | Alto rendimiento con particionamiento balanceado por clave (`partitionKey`) y balanceo de carga mediante **Consumer Groups**. |
+
+---
+
+## 🏗️ 3. Arquitectura Global del Sistema
 
 ```mermaid
 flowchart TD
-    subgraph Cliente_y_Seguridad["Carril HTTP Síncrono"]
-        User(["👤 Usuario"]) -->|1. Navega| FE["💻 Frontend SPA (Angular)"]
-        IdP["🔐 Microsoft Entra ID (Azure AD)"] -->|2. Emite Token JWT| FE
-        FE -->|3. Petición HTTP + Bearer Token| GW["🌐 API Gateway / Reverse Proxy"]
-        GW -->|4. HTTP REST| MS_PROD["⚙️ Microservicios de Negocio"]
+    subgraph Cliente_y_Seguridad["Carril HTTP Síncrono & Seguridad"]
+        User(["👤 Usuario"]) -->|1. Navega / Acciona| FE["💻 Frontend SPA (Angular)"]
+        IdP["🔐 Microsoft Entra ID (Azure AD)"] -->|2. Emite JWT OAuth2| FE
+        FE -->|3. HTTP REST + Bearer Token| GW["🌐 Microservicios REST"]
     end
 
-    subgraph Mensajeria["Carril Asíncrono Event-Driven (RabbitMQ Clúster)"]
-        MS_PROD -->|5. Publica Evento| EX["🔀 Exchanges (carhub.exchange / carhub.topic.exchange)"]
-        EX -->|6. Binding Routing Key| Q["📬 Colas Principales (3 Queues)"]
-        Q -->|7. Consumo Asíncrono| CONS["⚡ Consumidores (@RabbitListener)"]
-        CONS -.->|8a. Proceso Exitoso| ACK["✅ basicAck (Retiro)"]
-        CONS -.->|8b. Fallo / Error| NACK["❌ basicNack (requeue=false)"]
-        NACK -->|9. Redirección Automática| DLX["⚠️ Dead Letter Exchange (carhub.dlx)"]
-        DLX --> Q_DLQ["📦 Colas de Mensajes Muertos (3 DLQs)"]
+    subgraph Carril_RabbitMQ["Carril Asíncrono Transaccional (Clúster RabbitMQ 2 Nodos)"]
+        GW -->|4a. Publica Ticket/Factura| EX["🔀 Exchanges (Direct / Topic)"]
+        EX --> Q_TX["📬 Colas Transaccionales (compra, reclamos, usuario)"]
+        Q_TX --> CONS_RABBIT["⚡ Consumidores (@RabbitListener)"]
+        CONS_RABBIT -.->|Éxito| ACK["✅ basicAck"]
+        CONS_RABBIT -.->|Fallo| NACK["❌ basicNack (requeue=false)"]
+        NACK --> DLX["⚠️ Dead Letter Exchange (carhub.dlx)"]
+        DLX --> Q_DLQ["📦 Colas Muertas (DLQ)"]
     end
 
-    subgraph Persistencia["Capa de Datos"]
-        MS_PROD --> DB[("🗄️ MySQL 8.0 (6 Bases de Datos Aisladas)")]
+    subgraph Carril_Kafka["Carril de Streaming & Analítica (Clúster Kafka 2 Brokers)"]
+        GW -->|4b. Publica Stream Event| PROD_KAFKA["📤 Productores Kafka (Ventas / Telemetría)"]
+        PROD_KAFKA -->|KafkaTemplate| TOPICS{{"📊 Tópicos Particionados & Replicados"}}
+        TOPICS --> T1["carhub.ventas.streaming (3 Particiones, 2 Réplicas)"]
+        TOPICS --> T2["carhub.actividad.vehiculos (3 Particiones, 2 Réplicas)"]
+        T1 --> CG1["👥 Group: carhub-analytics-ventas-group"]
+        T2 --> CG2["👥 Group: carhub-telemetria-vehiculos-group"]
+        CG1 --> CONS_KAFKA1["📥 Consumidor Analítica Ventas (@KafkaListener)"]
+        CG2 --> CONS_KAFKA2["📥 Consumidor Telemetría (@KafkaListener)"]
+        CONS_KAFKA1 --> SVC_DOM1["⚙️ Capa de Dominio (AnaliticaVentasService)"]
+        CONS_KAFKA2 --> SVC_DOM2["⚙️ Capa de Dominio (AnaliticaVehiculosService)"]
+        CONS_KAFKA1 -.->|Fallo tras 3 reintentos| DLT1["⚠️ DLT: carhub.ventas.streaming.DLT"]
+        CONS_KAFKA2 -.->|Fallo tras 3 reintentos| DLT2["⚠️ DLT: carhub.actividad.vehiculos.DLT"]
+    end
+
+    subgraph Persistencia_y_Gestion["Capa de Persistencia y Gestión"]
+        GW --> DB[("🗄️ MySQL 8.0 (6 Esquemas Aislados)")]
+        KUI["🖥️ Kafka-UI (8085)"] --> TOPICS
+        ADMIN_API["🛠️ Kafka Admin API (backend-carhub:8066)"] --> TOPICS
     end
 ```
 
 ---
 
-## 📦 3. Catálogo de Microservicios y Puertos
+## 📦 4. Matriz de Microservicios, Puertos y Roles de Mensajería
 
-Cada microservicio es autónomo, posee su propio esquema de base de datos relacional y expone su documentación interactiva mediante Swagger / OpenAPI 3.
-
-| Microservicio | Puerto | Base de Datos (MySQL) | Responsabilidad | Swagger UI |
-| :--- | :---: | :---: | :--- | :--- |
-| **`backend-automotriz`** | `8061` | `automotriz` | Gestión de concesionarias, talleres y sucursales. | [Swagger 8061](http://localhost:8061/swagger-ui/index.html) |
-| **`backend-carhub-vehiculo`** | `8062` | `vehiculos` | Catálogo de vehículos, precios, marcas y modelos. | [Swagger 8062](http://localhost:8062/swagger-ui/index.html) |
-| **`backend-piezas`** | `8063` | `piezas` | Inventario de repuestos y compatibilidad vehicular. | [Swagger 8063](http://localhost:8063/swagger-ui/index.html) |
-| **`backend-reclamos`** | `8064` | `reclamos` | Tickets de soporte post-venta con RabbitMQ y DLQ. | [Swagger 8064](http://localhost:8064/swagger-ui/index.html) |
-| **`backend-compra`** | `8065` | `compra` | Facturación y emisión asíncrona de tickets de venta. | [Swagger 8065](http://localhost:8065/swagger-ui/index.html) |
-| **`backend-carhub`** | `8066` | `usuarios` | Autenticación Entra ID, usuarios y RabbitAdmin API. | [Swagger 8066](http://localhost:8066/swagger-ui/index.html) |
+| Microservicio | Puerto Host | Base de Datos (MySQL) | Integración RabbitMQ 🐇 | Integración Apache Kafka ⚡ | Swagger / OpenAPI |
+| :--- | :---: | :---: | :--- | :--- | :--- |
+| **`backend-automotriz`** | `8061` | `automotriz` | *(Sin integración)* | *(Sin integración)* | [Swagger 8061](http://localhost:8061/swagger-ui/index.html) |
+| **`backend-carhub-vehiculo`** | `8062` | `vehiculos` | *(Sin integración)* | **Productor:** Tópico `carhub.actividad.vehiculos` | [Swagger 8062](http://localhost:8062/swagger-ui/index.html) |
+| **`backend-piezas`** | `8063` | `piezas` | *(Sin integración)* | *(Sin integración)* | [Swagger 8063](http://localhost:8063/swagger-ui/index.html) |
+| **`backend-reclamos`** | `8064` | `reclamos` | **Productor/Consumidor:** Tickets con DLQ | *(Sin integración)* | [Swagger 8064](http://localhost:8064/swagger-ui/index.html) |
+| **`backend-compra`** | `8065` | `compra` | **Productor/Consumidor:** Facturas con DLQ | **Productor:** Tópico `carhub.ventas.streaming` | [Swagger 8065](http://localhost:8065/swagger-ui/index.html) |
+| **`backend-carhub`** | `8066` | `usuarios` | **Admin API** + Notificaciones con DLQ | **Admin API** + **Consumidor** de ambos tópicos | [Swagger 8066](http://localhost:8066/swagger-ui/index.html) |
 
 ---
 
-## 🐇 4. Topología de Mensajería RabbitMQ (Clúster de 2 Nodos)
+## ⚡ 5. Topología de Apache Kafka (Clúster de 2 Brokers)
 
-El clúster está formado por dos nodos sincronizados:
-* **Nodo 1 (Líder):** `rabbit@rabbit1` (AMQP `5672` | Panel Web `15672`)
-* **Nodo 2 (Miembro):** `rabbit@rabbit2` (AMQP `5673` | Panel Web `15673`)
-* **Credenciales de Gestión:** `guest` / `guest`
+* **Zookeeper:** `zookeeper-carhub` (Puerto `2181`)
+* **Kafka Broker 1 (Líder Clúster):** `kafka1-carhub` (Host: **`localhost:5030`** | Docker interno: `kafka1:29092`)
+* **Kafka Broker 2 (Miembro Clúster):** `kafka2-carhub` (Host: **`localhost:5031`** | Docker interno: `kafka2:29093`)
+* **Kafka-UI (Consola Web):** `kafka-ui-carhub` (Host: **`http://localhost:8085`**)
 
-### Exchanges Configurados
-* **`carhub.exchange` (Direct):** Enrutamiento punto a punto mediante coincidencia exacta de routing keys.
-* **`carhub.topic.exchange` (Topic):** Enrutamiento flexible basado en patrones y comodines (`*.ticket.*`, `usuario.#`).
-* **`carhub.dlx` (Direct - Dead Letter Exchange):** Intercambiador de respaldo que recibe mensajes rechazados o fallidos.
+### Matriz de Tópicos de Negocio
 
-### Matriz de Colas, Bindings y DLQs
+| Tópico | Particiones | Replicación | Retención (`retention.ms`) | Cleanup Policy | Productor | Consumidor | Consumer Group | Propósito |
+| :--- | :---: | :---: | :---: | :---: | :--- | :--- | :--- | :--- |
+| **`carhub.ventas.streaming`** | `3` | `2` | 7 días (`604800000`) | `delete` | `backend-compra` | `backend-carhub` | `carhub-analytics-ventas-group` | Analítica continua de ingresos, ventas y perfil de compra en tiempo real. |
+| **`carhub.actividad.vehiculos`** | `3` | `2` | 3 días (`259200000`) | `delete` | `backend-carhub-vehiculo` | `backend-carhub` | `carhub-telemetria-vehiculos-group` | Telemetría de demanda vehicular (vistas, cotizaciones, favoritos). |
 
-| Cola Principal | Exchange | Routing Key | Dead Letter Queue (DLQ) | DLQ Routing Key |
-| :--- | :--- | :--- | :--- | :--- |
-| **`backend-compra.ticket.queue`** | `carhub.exchange` | `backend-compra.ticket.rk` | `backend-compra.ticket.dlq` | `backend-compra.ticket.dlq.rk` |
-| **`backend-reclamos.ticket.queue`** | `carhub.exchange` | `backend-reclamos.ticket.rk` | `backend-reclamos.ticket.dlq` | `backend-reclamos.ticket.dlq.rk` |
-| **`backend-carhub.usuario.queue`** | `carhub.exchange` | `backend-carhub.usuario.rk` | `backend-carhub.usuario.dlq` | `backend-carhub.usuario.dlq.rk` |
-
-### Política de Confirmación (ACK / NACK)
-Todos los consumidores operan con confirmación manual explícita (`ackMode = "MANUAL"`):
-* **`basicAck`:** Confirma el procesamiento exitoso del mensaje y lo libera de la cola.
-* **`basicNack(..., requeue = false)`:** En caso de excepción de negocio o fallo de validación, rechaza el mensaje sin reencolarlo, forzando a RabbitMQ a derivarlo inmediatamente a la **DLQ** correspondiente.
+### Resiliencia y Manejo de Errores en Kafka
+* **ErrorHandlingDeserializer:** Envuelve al deserializador JSON para interceptar payloads corruptos o cadenas inesperadas sin abortar los hilos de escucha.
+* **DefaultErrorHandler & FixedBackOff:** Ejecuta hasta **3 reintentos** automáticos espaciados por 1 segundo ante excepciones transitorias.
+* **Logging Contextual:** Se registran el tópico, partición, offset, llave y mensaje de causa exacto en caso de error.
+* **Separación de Capas:** Los consumidores `@KafkaListener` no implementan lógica de negocio; delegan directamente a servicios de dominio independientes (`AnaliticaVentasService` y `AnaliticaVehiculosService`).
 
 ---
 
-## 🔐 5. Seguridad e Identidad (Microsoft Entra ID)
+## 🛠️ 6. Microservicio Administrador de Kafka (`backend-carhub`)
 
-* **Proveedor de Identidad (IdP):** Microsoft Entra ID (Azure AD).
-* **Protocolos:** OAuth 2.0 / OpenID Connect (OIDC).
-* **Validación en Backend:** Spring Security Resource Server valida la firma criptográfica del JWT contra el endpoint público de claves de Microsoft (`https://login.microsoftonline.com/common/discovery/v2.0/keys`).
-* **Validación de Claims:** Se verifican `issuer`, `exp` (caducidad) y `aud` (Audience / Client ID).
+El microservicio expone endpoints REST construidos sobre la API oficial `AdminClient` de Apache Kafka:
+
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `POST` | `/api/v1/admin/kafka/topics` | Crea un nuevo tópico especificando nombre, particiones, réplicas, `retentionMs` y `cleanupPolicy`. |
+| `GET` | `/api/v1/admin/kafka/topics` | Lista todos los tópicos del clúster con su cantidad de particiones y factor de replicación. |
+| `GET` | `/api/v1/admin/kafka/topics/{name}` | Inspecciona detalle completo del tópico: réplicas, líderes y configuraciones avanzadas. |
+| `PATCH` | `/api/v1/admin/kafka/topics/{name}` | Modifica particiones (incremento) o parámetros de configuración (`retention.ms`, `cleanup.policy`). |
+| `DELETE` | `/api/v1/admin/kafka/topics/{name}` | Elimina un tópico del clúster. |
+| `GET` | `/api/v1/admin/kafka/consumer-groups` | Lista todos los **Consumer Groups** registrados, su estado (`STABLE`), miembros y offsets. |
+| `GET` | `/api/v1/admin/kafka/analytics/ventas` | Consulta las métricas agregadas obtenidas del flujo streaming de ventas. |
+| `GET` | `/api/v1/admin/kafka/analytics/vehiculos` | Consulta el ranking de demanda e interacciones de vehículos en tiempo real. |
 
 ---
 
-## 🚀 6. Despliegue Automatizado en Linux / AWS EC2
+## 🖥️ 7. Script CLI de Infraestructura (`dockers/kafka-admin.sh`)
 
-Toda la solución (Base de datos MySQL, Clúster RabbitMQ y los 6 microservicios Spring Boot) se despliega mediante un único script automatizado y Docker Compose con compilación multi-stage (no requiere tener Java ni Maven instalados en el servidor host).
-
-### Requisitos Previos en el Servidor
-* Docker Engine 24+
-* Docker Compose v2+
-
-### Ejecución del Despliegue
-En la raíz del proyecto clonado en tu instancia EC2 o Linux:
+Para operaciones rápidas desde consola o pipelines:
 
 ```bash
-# 1. Otorgar permisos de ejecución al script
-chmod +x dockers/arrancar-servicios.sh
+# Otorgar permisos
+chmod +x dockers/kafka-admin.sh
 
-# 2. Ejecutar el orquestador
+# Listar tópicos en el clúster
+./dockers/kafka-admin.sh listar-topicos
+
+# Ver detalle de particiones, réplicas y configs de un tópico
+./dockers/kafka-admin.sh describir-topico carhub.ventas.streaming
+
+# Crear un tópico personalizado (nombre, particiones, réplicas, retención ms)
+./dockers/kafka-admin.sh crear-topico mi.nuevo.topico 3 2 86400000
+
+# Listar Consumer Groups activos
+./dockers/kafka-admin.sh listar-grupos
+
+# Ver lag y miembros de un Consumer Group
+./dockers/kafka-admin.sh describir-grupo carhub-analytics-ventas-group
+
+# Consumir eventos en vivo desde el inicio
+./dockers/kafka-admin.sh consumir carhub.ventas.streaming
+
+# Verificar estado y brokers registrados en Zookeeper
+./dockers/kafka-admin.sh estado-cluster
+```
+
+---
+
+## 🚀 8. Despliegue Automatizado en Linux / AWS EC2
+
+```bash
+# En la raíz del repositorio:
+chmod +x dockers/arrancar-servicios.sh
 ./dockers/arrancar-servicios.sh
 ```
-*(Nota: Si tu usuario no pertenece al grupo docker, ejecútalo con `sudo ./dockers/arrancar-servicios.sh`).*
 
-### ¿Qué hace el script automáticamente?
-1. Limpia contenedores y redes residuales para evitar conflictos.
-2. Detecta puertos en uso en el host.
-3. Levanta **MySQL 8.0** y crea automáticamente las 6 bases de datos requeridas.
-4. Levanta los nodos `rabbitmq1` y `rabbitmq2`, sincronizando el clúster.
-5. Construye secuencialmente las imágenes Docker multi-stage optimizando el uso de memoria RAM (`-Xms128m -Xmx256m`) para entornos EC2.
-6. Levanta todos los microservicios e imprime el resumen de salud y accesos.
-7. Todos los contenedores cuentan con política `restart: always` para restaurarse automáticamente ante reinicios de la máquina virtual.
+El script se encarga de:
+1. Limpiar contenedores previos de MySQL, RabbitMQ y Kafka.
+2. Iniciar **MySQL 8.0** y crear los 6 esquemas de base de datos.
+3. Iniciar los 2 nodos de **RabbitMQ** y sincronizar el clúster.
+4. Iniciar **Zookeeper**, **Kafka Broker 1** (puerto `5030`), **Kafka Broker 2** (puerto `5031`) y **Kafka-UI** (puerto `8085`).
+5. Compilar y levantar los 6 microservicios Spring Boot con variables de entorno para RabbitMQ y Kafka.
 
 ---
 
-## 🧪 7. Pruebas de Demostración en Vivo
+## 🧪 9. Pruebas de Demostración en Vivo para la Evaluación
 
-### A. Prueba de Autorización (HTTP 200 vs HTTP 401)
-1. **Petición rechazada (401 Unauthorized):**
-   * Petición: `GET http://<IP>:8066/api/v1/usuarios` sin cabeceras.
-   * Respuesta esperada: `401 Unauthorized` con mensaje JSON explicativo.
-2. **Petición aceptada (200 OK):**
-   * Petición: `GET http://<IP>:8066/api/v1/usuarios`
-   * Cabecera: `Authorization: Bearer <TOKEN_JWT_ENTRA_ID>`
-   * Respuesta esperada: `200 OK` con listado JSON de usuarios.
+### A. Verificar Clúster Kafka y Tópicos con Particiones / Réplicas
+1. Abrir en el navegador: `http://localhost:8085` (Kafka-UI).
+2. Comprobar que el clúster `carhub-cluster` tiene **2 brokers activos** (Broker 1 y Broker 2).
+3. Inspeccionar los tópicos `carhub.ventas.streaming` y `carhub.actividad.vehiculos`:
+   * Verificar **3 Particiones** por tópico.
+   * Verificar **Factor de Replicación 2**.
+   * Verificar en *Configurations* el parámetro `retention.ms` (604800000 y 259200000 respectivamente).
 
-### B. Prueba de Resiliencia RabbitMQ (Fallo controlado a la DLQ)
-1. Ingresar al panel de RabbitMQ: `http://<IP>:15672` (usuario: `guest`, clave: `guest`).
-2. Entrar a la cola `backend-compra.ticket.queue` $\rightarrow$ sección **Publish message**.
-3. Enviar un payload vacío `{}` o mal formado.
-4. El consumidor detecta los campos vacíos, genera una excepción y ejecuta `channel.basicNack(deliveryTag, false, false)`.
-5. Comprobar que el mensaje sale de la cola principal y se almacena de inmediato en **`backend-compra.ticket.dlq`**.
+### B. Probar Producción y Consumo Streaming de Ventas (Convivencia RabbitMQ + Kafka)
+1. Ejecutar una compra en `POST http://localhost:8065/api/v1/compras`:
+   ```json
+   {
+     "idUser": 1,
+     "idVehiculo": 10,
+     "idAutomotriz": 2,
+     "metodoPago": "TRANSFERENCIA",
+     "subtotal": 18500000
+   }
+   ```
+2. Verificar en la consola de `backend-compra`:
+   * Emisión a RabbitMQ para el ticket transaccional.
+   * Emisión asíncrona a Kafka hacia `carhub.ventas.streaming` con clave de partición.
+3. Verificar en la consola de `backend-carhub`:
+   * Consumo inmediato vía `@KafkaListener` en el grupo `carhub-analytics-ventas-group`.
+   * Procesamiento en la capa de dominio `AnaliticaVentasService`.
+4. Consultar métricas en tiempo real:
+   * `GET http://localhost:8066/api/v1/admin/kafka/analytics/ventas`
+
+### C. Probar Telemetría y Demanda de Vehículos
+1. Consultar un vehículo en `GET http://localhost:8062/api/v1/vehiculos/1`.
+2. `backend-carhub-vehiculo` emite el evento `'VISTO'` hacia `carhub.actividad.vehiculos`.
+3. `backend-carhub` consume el evento en el grupo `carhub-telemetria-vehiculos-group`.
+4. Consultar el ranking de demanda:
+   * `GET http://localhost:8066/api/v1/admin/kafka/analytics/vehiculos`
+
+### D. Probar Operaciones del Microservicio Administrador de Kafka
+1. **Crear tópico:**
+   * `POST http://localhost:8066/api/v1/admin/kafka/topics`
+   * Body: `{"name": "carhub.telemetria.talleres", "partitions": 3, "replicationFactor": 2, "retentionMs": 86400000, "cleanupPolicy": "delete"}`
+2. **Listar tópicos:**
+   * `GET http://localhost:8066/api/v1/admin/kafka/topics`
+3. **Modificar tópico (incrementar particiones):**
+   * `PATCH http://localhost:8066/api/v1/admin/kafka/topics/carhub.telemetria.talleres`
+   * Body: `{"partitions": 4}`
+4. **Listar Consumer Groups:**
+   * `GET http://localhost:8066/api/v1/admin/kafka/consumer-groups`
+5. **Eliminar tópico:**
+   * `DELETE http://localhost:8066/api/v1/admin/kafka/topics/carhub.telemetria.talleres`
 
 ---
 
-## 📂 8. Estructura del Repositorio
+## 📂 10. Estructura del Repositorio
 
 ```text
 ├── backend-automotriz/         # Microservicio Concesionarias y Sucursales (8061)
-├── backend-carhub-vehiculo/    # Microservicio Catálogo de Vehículos (8062)
+├── backend-carhub-vehiculo/    # Microservicio Vehículos y Productor Kafka Telemetría (8062)
 ├── backend-piezas/             # Microservicio Repuestos y Piezas (8063)
-├── backend-reclamos/           # Microservicio Reclamos de Soporte (8064)
-├── backend-compra/             # Microservicio Compras y Facturación (8065)
-├── backend-carhub/             # Microservicio Usuarios, OAuth2 y RabbitAdmin (8066)
+├── backend-reclamos/           # Microservicio Reclamos de Soporte con RabbitMQ y DLQ (8064)
+├── backend-compra/             # Microservicio Compras, RabbitMQ DLQ y Productor Kafka Ventas (8065)
+├── backend-carhub/             # Usuarios, OAuth2, RabbitAdmin, KafkaAdmin y Consumidores Kafka (8066)
 ├── frontend-carhub/            # Aplicación Web Frontend (Angular SPA)
 ├── dockers/                    # Infraestructura Docker, Scripts y Compose
-│   ├── arrancar-servicios.sh   # Script de despliegue para Linux / AWS EC2
-│   ├── arrancar-servicios.ps1  # Script de despliegue para Windows PowerShell
-│   ├── docker-compose.yml      # Definición de servicios, redes y volúmenes
+│   ├── arrancar-servicios.sh   # Despliegue automatizado Linux / AWS EC2
+│   ├── arrancar-servicios.ps1  # Despliegue automatizado Windows PowerShell
+│   ├── kafka-admin.sh          # Utilidad CLI para inspección y gestión de Kafka
+│   ├── docker-compose.yml      # Definición de MySQL, RabbitMQ Clúster, Kafka Clúster y Kafka-UI
 │   └── init-db.sql             # Inicialización de bases de datos MySQL
+├── puertos.txt                 # Catálogo oficial de puertos y servicios
 ├── .gitattributes              # Normalización de saltos de línea LF para Linux
 └── README.md                   # Documentación principal del proyecto
 ```

@@ -60,6 +60,97 @@ services:
       - carhub-infra-net
 
   # ==========================================
+  # ZOOKEEPER (Coordinador del Clúster Kafka)
+  # ==========================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper-carhub
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
+  # NODO 1 KAFKA BROKER (Puerto Host 5030)
+  # ==========================================
+  kafka1:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka1-carhub
+    hostname: kafka1
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "5030:5030"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:5030
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka1_data:/var/lib/kafka/data
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
+  # NODO 2 KAFKA BROKER (Puerto Host 5031)
+  # ==========================================
+  kafka2:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka2-carhub
+    hostname: kafka2
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "5031:5031"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,PLAINTEXT_HOST://localhost:5031
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka2_data:/var/lib/kafka/data
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
+  # KAFKA UI (Administración y Monitoreo Web)
+  # ==========================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui-carhub
+    restart: always
+    depends_on:
+      - kafka1
+      - kafka2
+    ports:
+      - "8085:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: carhub-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:29092,kafka2:29093
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - carhub-infra-net
+
+  # ==========================================
   # MICROSERVICIO AUTOMOTRIZ (Puerto 8061)
   # ==========================================
   automotriz:
@@ -102,10 +193,13 @@ services:
       - SPRING_DATASOURCE_PASSWORD=zacky5023
       - SPRING_RABBITMQ_HOST=rabbitmq1
       - SPRING_RABBITMQ_PORT=5672
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29093
       - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
     depends_on:
       - mysql
       - rabbitmq1
+      - kafka1
+      - kafka2
     networks:
       - carhub-infra-net
 
@@ -179,12 +273,15 @@ services:
       - SPRING_DATASOURCE_PASSWORD=zacky5023
       - SPRING_RABBITMQ_HOST=rabbitmq1
       - SPRING_RABBITMQ_PORT=5672
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29093
       - SERVICES_USUARIO_URL=http://carhub:8066/api/v1/usuarios/
       - SERVICES_VEHICULOS_URL=http://vehiculos:8062/api/v1/vehiculos/
       - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
     depends_on:
       - mysql
       - rabbitmq1
+      - kafka1
+      - kafka2
     networks:
       - carhub-infra-net
 
@@ -206,10 +303,13 @@ services:
       - SPRING_DATASOURCE_PASSWORD=zacky5023
       - SPRING_RABBITMQ_HOST=rabbitmq1
       - SPRING_RABBITMQ_PORT=5672
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29093
       - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
     depends_on:
       - mysql
       - rabbitmq1
+      - kafka1
+      - kafka2
     networks:
       - carhub-infra-net
 
@@ -217,6 +317,10 @@ volumes:
   mysql_data:
   rabbitmq1_data:
   rabbitmq2_data:
+  zookeeper_data:
+  zookeeper_log:
+  kafka1_data:
+  kafka2_data:
 
 networks:
   carhub-infra-net:

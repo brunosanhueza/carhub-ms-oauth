@@ -11,6 +11,10 @@ $containers = @(
     "mysql-carhub",
     "rabbitmq1",
     "rabbitmq2",
+    "zookeeper-carhub",
+    "kafka1-carhub",
+    "kafka2-carhub",
+    "kafka-ui-carhub",
     "backend-automotriz",
     "backend-vehiculos",
     "backend-piezas",
@@ -37,9 +41,9 @@ if ($portInUse) {
     $env:MYSQL_PORT = "3306"
 }
 
-# 2. Levantar MySQL y RabbitMQ primero
-Write-Host "[INFO] Levantando MySQL y RabbitMQ..." -ForegroundColor Green
-docker compose up -d mysql rabbitmq1 rabbitmq2
+# 2. Levantar MySQL, RabbitMQ y Kafka
+Write-Host "[INFO] Levantando MySQL, RabbitMQ, Zookeeper y Clúster Kafka..." -ForegroundColor Green
+docker compose up -d mysql rabbitmq1 rabbitmq2 zookeeper kafka1 kafka2 kafka-ui
 
 Write-Host "[INFO] Esperando a que MySQL responda..." -ForegroundColor Gray
 $count = 0
@@ -72,6 +76,7 @@ Write-Host "=================================================================" -
 Write-Host " SERVICIOS LISTOS:" -ForegroundColor Green
 Write-Host " - MySQL (Host: $env:MYSQL_PORT | Red interna: 3306) con 6 BDs creadas" -ForegroundColor Green
 Write-Host " - RabbitMQ Clúster (5672 / 15672)" -ForegroundColor Green
+Write-Host " - Kafka Clúster (Broker 1: 5030 | Broker 2: 5031 | Kafka-UI: http://localhost:8085)" -ForegroundColor Green
 Write-Host " - Automotriz:    http://localhost:8061/swagger-ui/index.html" -ForegroundColor Green
 Write-Host " - Vehículos:     http://localhost:8062/swagger-ui/index.html" -ForegroundColor Green
 Write-Host " - Piezas:        http://localhost:8063/swagger-ui/index.html" -ForegroundColor Green

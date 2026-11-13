@@ -26,6 +26,9 @@ public class compraService {
     @Autowired
     private com.loquendodev.compra.publisher.CompraEventPublisher compraEventPublisher;
 
+    @Autowired
+    private com.loquendodev.compra.publisher.VentaKafkaProducer ventaKafkaProducer;
+
     @org.springframework.beans.factory.annotation.Value("${services.usuario.url:http://localhost:8066/api/v1/usuarios/}")
     private String URL_USUARIO;
 
@@ -76,8 +79,11 @@ public class compraService {
         // 3. Guarda en DB
         facturaModel facturaGuardada = compraRepo.save(compra);
 
-        // 4. Publica evento asíncrono para generación de ticket/documento
+        // 4. Publica evento asíncrono para generación de ticket/documento (RabbitMQ)
         compraEventPublisher.publicarTicketCompra(facturaGuardada);
+
+        // 5. Emite evento de analítica y streaming en tiempo real (Apache Kafka)
+        ventaKafkaProducer.emitirEventoVentaStreaming(facturaGuardada);
 
         return facturaGuardada;
     }
